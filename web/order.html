@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Order Food - FoodieHub</title>
+
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+    <h1>FoodieHub </h1>
+    <h2>Place Your Order</h2>
+    <form action="OrderServlet" method="post">
+        <label>Customer Name:</label>
+        <br>
+        <input type="text" name="customerName" required>
+        <br><br>
+        <label>Select Food:</label>
+        <br>
+        <select name="foodName">
+            <option value="Pizza">Pizza - ₹200</option>
+            <option value="Burger">Burger - ₹120</option>
+            <option value="Biryani">Biryani - ₹180</option>
+            <option value="Pasta">Pasta - ₹150</option>
+        </select>
+        <br><br>
+        <label>Quantity:</label>
+        <br>
+        <input type="number" name="quantity" min="1" required>
+        <br><br>
+        <button type="submit">Order Now</button>
+
+    </form>
+<a href="./index.html">menu page</a>
+</body>
+</html>
