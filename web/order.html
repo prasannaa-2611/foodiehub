@@ -1,39 +1,85 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Order Food - FoodieHub</title>
+    <title>FoodieHub - Place Your Order</title>
 
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="./style.css">
-</head>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-<body>
-    <h1>FoodieHub </h1>
-    <h2>Place Your Order</h2>
-    <form action="OrderServlet" method="post">
-        <label>Customer Name:</label>
-        <br>
-        <input type="text" name="customerName" required>
-        <br><br>
-        <label>Select Food:</label>
-        <br>
-        <select name="foodName">
-            <option value="Pizza">Pizza - ₹200</option>
-            <option value="Burger">Burger - ₹120</option>
-            <option value="Biryani">Biryani - ₹180</option>
-            <option value="Pasta">Pasta - ₹150</option>
-        </select>
-        <br><br>
-        <label>Quantity:</label>
-        <br>
-        <input type="number" name="quantity" min="1" required>
-        <br><br>
-        <button type="submit">Order Now</button>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f7f7f7;
+            min-height: 100vh;
+        }
 
-    </form>
-<a href="./index.html">menu page</a>
-</body>
-</html>
+        .header {
+            background: linear-gradient(135deg, #ff9800, #ff6f00);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+
+        .header h1 {
+            font-size: 34px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 17px;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 600px;
+            margin: 40px auto;
+        }
+
+        .order-card {
+            background: white;
+            padding: 35px;
+            border-radius: 18px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .order-card h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #777;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #ddd;
+            border-radius: 9px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input:focus,
+        select:focus
