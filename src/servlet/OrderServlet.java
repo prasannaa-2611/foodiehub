@@ -17,9 +17,9 @@ public class OrderServlet extends HttpServlet {
         String food = request.getParameter("foodName");
         int quantity = Integer.parseInt(request.getParameter("quantity"));
 
-        String url = "jdbc:mysql://localhost:3306/foodiehub";
-        String username = "root";
-        String password = "Foodie@2026";
+        String url = System.getenv("DB_URL");
+String username = System.getenv("DB_USERNAME");
+String password = System.getenv("DB_PASSWORD");
 
         String sql = "INSERT INTO orders (customer_name, food_name, quantity) VALUES (?, ?, ?)";
 
