@@ -35,6 +35,7 @@ public class OrderPageServlet extends HttpServlet {
 
         int userId =
                 (Integer) session.getAttribute("userId");
+                System.out.println("ORDER PAGE USER ID = " + userId);
 
 String selectedFood = request.getParameter("food");
 

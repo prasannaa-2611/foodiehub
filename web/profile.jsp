@@ -433,7 +433,7 @@
 
         <div>
             <a href="index.html">Home</a>
-            <a href="order.html">Order</a>
+            <a href="OrderPageServlet">Order</a>
         </div>
 
     </nav>
@@ -577,7 +577,7 @@
                     Back Home
                 </a>
 
-                <a href="order.html"
+                <a href="OrderPageServlet"
                    class="btn primary">
                     Order Food
                 </a>
