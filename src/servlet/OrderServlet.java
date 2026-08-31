@@ -9,6 +9,17 @@ import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+import jakarta.mail.Message;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
+
+import java.util.Properties;
+
+import jakarta.mail.Authenticator;
+import jakarta.mail.PasswordAuthentication;
 
 @WebServlet("/OrderServlet")
 public class OrderServlet extends HttpServlet {
@@ -30,7 +41,15 @@ public class OrderServlet extends HttpServlet {
 
         String customerName =
                 request.getParameter("customerName");
+HttpSession session = request.getSession(false);
 
+if (session == null || session.getAttribute("email") == null) {
+    showError(out, "User email not found. Please login again.");
+    return;
+}
+
+String customerEmail =
+        (String) session.getAttribute("email");
         String foodName =
                 request.getParameter("foodName");
 
@@ -301,6 +320,18 @@ public class OrderServlet extends HttpServlet {
                 );
 
                 addressPs.executeUpdate();
+                sendOrderEmail(
+        customerEmail,
+        customerName.trim(),
+        foodName.trim(),
+        quantity,
+        fullName.trim(),
+        phone.trim(),
+        addressLine.trim(),
+        city.trim(),
+        state.trim(),
+        pincode.trim()
+);
             }
 
 
@@ -887,7 +918,101 @@ public class OrderServlet extends HttpServlet {
     // =========================================================
     // HTML ESCAPE
     // =========================================================
+private void sendOrderEmail(
+        String customerEmail,
+        String customerName,
+        String foodName,
+        int quantity,
+        String fullName,
+        String phone,
+        String addressLine,
+        String city,
+        String state,
+        String pincode) throws Exception {
 
+    String emailUsername = System.getenv("EMAIL_USERNAME");
+    String emailPassword = System.getenv("EMAIL_PASSWORD");
+
+    if (emailUsername == null || emailUsername.isBlank()) {
+        throw new Exception("EMAIL_USERNAME is missing.");
+    }
+
+    if (emailPassword == null || emailPassword.isBlank()) {
+        throw new Exception("EMAIL_PASSWORD is missing.");
+    }
+
+    Properties props = new Properties();
+
+    props.put(
+        "mail.smtp.host",
+        "smtp.gmail.com"
+    );
+
+    props.put(
+        "mail.smtp.port",
+        "587"
+    );
+
+    props.put(
+        "mail.smtp.auth",
+        "true"
+    );
+
+    props.put(
+        "mail.smtp.starttls.enable",
+        "true"
+    );
+
+    Session mailSession = Session.getInstance(
+        props,
+        new jakarta.mail.Authenticator() {
+
+            @Override
+            protected jakarta.mail.PasswordAuthentication getPasswordAuthentication() {
+                return new jakarta.mail.PasswordAuthentication(
+                    emailUsername,
+                    emailPassword
+                );
+            }
+        }
+    );
+
+    Message message = new MimeMessage(mailSession);
+
+    message.setFrom(
+        new InternetAddress(emailUsername)
+    );
+
+    message.setRecipients(
+        Message.RecipientType.TO,
+        InternetAddress.parse(customerEmail)
+    );
+
+    message.setSubject(
+        "FoodieHub - Order Confirmed 🍴"
+    );
+
+    String emailBody =
+            "Hello " + customerName + ",\n\n"
+            + "Your FoodieHub order has been placed successfully!\n\n"
+            + "ORDER DETAILS\n"
+            + "--------------------------\n"
+            + "Food: " + foodName + "\n"
+            + "Quantity: " + quantity + "\n\n"
+            + "DELIVERY ADDRESS\n"
+            + "--------------------------\n"
+            + "Name: " + fullName + "\n"
+            + "Phone: " + phone + "\n"
+            + "Address: " + addressLine + "\n"
+            + "City: " + city + "\n"
+            + "State: " + state + "\n"
+            + "Pincode: " + pincode + "\n\n"
+            + "Thank you for ordering with FoodieHub! ❤️\n";
+
+    message.setText(emailBody);
+
+    Transport.send(message);
+}
     private String escapeHtml(String text) {
 
         if (text == null) {
@@ -923,4 +1048,68 @@ public class OrderServlet extends HttpServlet {
                     "&#39;"
                 );
     }
+    private void sendOrderEmail(
+        String customerEmail,
+        String customerName,
+        String foodName,
+        int quantity,
+        String fullName,
+        String phone,
+        String addressLine,
+        String city,
+        String state,
+        String pincode) throws Exception {
+
+    String senderEmail = System.getenv("EMAIL_USERNAME");
+    String senderPassword = System.getenv("EMAIL_PASSWORD");
+
+    Properties props = new Properties();
+
+    props.put("mail.smtp.auth", "true");
+    props.put("mail.smtp.starttls.enable", "true");
+    props.put("mail.smtp.host", "smtp.gmail.com");
+    props.put("mail.smtp.port", "587");
+
+    Session mailSession = Session.getInstance(
+            props,
+            new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(
+                            senderEmail,
+                            senderPassword
+                    );
+                }
+            }
+    );
+
+    Message message = new MimeMessage(mailSession);
+
+    message.setFrom(new InternetAddress(senderEmail));
+
+    message.setRecipients(
+            Message.RecipientType.TO,
+            InternetAddress.parse(customerEmail)
+    );
+
+    message.setSubject("FoodieHub - Order Confirmed");
+
+    String emailBody =
+            "Hello " + customerName + ",\n\n"
+            + "Your FoodieHub order has been placed successfully!\n\n"
+            + "Order Details:\n"
+            + "Food: " + foodName + "\n"
+            + "Quantity: " + quantity + "\n\n"
+            + "Delivery Address:\n"
+            + fullName + "\n"
+            + phone + "\n"
+            + addressLine + "\n"
+            + city + ", " + state + "\n"
+            + pincode + "\n\n"
+            + "Thank you for ordering with FoodieHub!";
+
+    message.setText(emailBody);
+
+    Transport.send(message);
+}
 }
