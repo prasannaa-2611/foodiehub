@@ -535,7 +535,7 @@
 
                 <div class="buttons">
 
-                    <a href="address.html"
+                    <a href="AddressServlet"
                        class="btn primary">
                         Edit Address
                     </a>
@@ -554,7 +554,7 @@
 
                 <div class="buttons">
 
-                    <a href="address.html"
+                    <a href="AddressServlet"
                        class="btn primary">
                         + Add Address
                     </a>

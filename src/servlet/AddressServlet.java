@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -12,112 +13,110 @@ import jakarta.servlet.http.HttpSession;
 
 @WebServlet("/AddressServlet")
 public class AddressServlet extends HttpServlet {
-@Override
-protected void doGet(
-        HttpServletRequest request,
-        HttpServletResponse response)
-        throws ServletException, IOException {
 
-    HttpSession session = request.getSession(false);
+    @Override
+    protected void doGet(
+            HttpServletRequest request,
+            HttpServletResponse response)
+            throws ServletException, IOException {
 
-    // Check login
-    if (session == null ||
-        session.getAttribute("userId") == null) {
+        HttpSession session = request.getSession(false);
 
-        response.sendRedirect("login.html");
-        return;
-    }
+        // Check login
+        if (session == null ||
+                session.getAttribute("userId") == null) {
 
-    int userId =
-            (Integer) session.getAttribute("userId");
+            response.sendRedirect("login.html");
+            return;
+        }
 
-    String url = System.getenv("DB_URL");
-    String username = System.getenv("DB_USERNAME");
-    String password = System.getenv("DB_PASSWORD");
+        int userId = (Integer) session.getAttribute("userId");
 
-    if (url != null && url.startsWith("mysql://")) {
-        url = "jdbc:" + url;
-    }
+        String url = System.getenv("DB_URL");
+        String username = System.getenv("DB_USERNAME");
+        String password = System.getenv("DB_PASSWORD");
 
-    try {
+        if (url != null && url.startsWith("mysql://")) {
+            url = "jdbc:" + url;
+        }
 
-        Class.forName("com.mysql.cj.jdbc.Driver");
+        String sql =
+                "SELECT full_name, phone, address_line, " +
+                "city, state, pincode " +
+                "FROM addresses " +
+                "WHERE user_id = ? " +
+                "ORDER BY id DESC " +
+                "LIMIT 1";
 
-        String sql = """
-            SELECT full_name, phone, address_line,
-                   city, state, pincode
-            FROM addresses
-            WHERE user_id = ?
-            ORDER BY id DESC
-            LIMIT 1
-            """;
+        try {
 
-        try (
-            Connection con =
-                DriverManager.getConnection(
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            try (
+                Connection con = DriverManager.getConnection(
                     url,
                     username,
                     password
                 );
 
-            PreparedStatement ps =
-                con.prepareStatement(sql)
-        ) {
+                PreparedStatement ps = con.prepareStatement(sql)
+            ) {
 
-            ps.setInt(1, userId);
+                ps.setInt(1, userId);
 
-            try (var rs = ps.executeQuery()) {
+                try (ResultSet rs = ps.executeQuery()) {
 
-                if (rs.next()) {
+                    if (rs.next()) {
 
-                    // Send existing values to address.html
-                    request.setAttribute(
-                            "fullName",
-                            rs.getString("full_name")
-                    );
+                        request.setAttribute(
+                                "fullName",
+                                rs.getString("full_name")
+                        );
 
-                    request.setAttribute(
-                            "phone",
-                            rs.getString("phone")
-                    );
+                        request.setAttribute(
+                                "phone",
+                                rs.getString("phone")
+                        );
 
-                    request.setAttribute(
-                            "addressLine",
-                            rs.getString("address_line")
-                    );
+                        request.setAttribute(
+                                "addressLine",
+                                rs.getString("address_line")
+                        );
 
-                    request.setAttribute(
-                            "city",
-                            rs.getString("city")
-                    );
+                        request.setAttribute(
+                                "city",
+                                rs.getString("city")
+                        );
 
-                    request.setAttribute(
-                            "state",
-                            rs.getString("state")
-                    );
+                        request.setAttribute(
+                                "state",
+                                rs.getString("state")
+                        );
 
-                    request.setAttribute(
-                            "pincode",
-                            rs.getString("pincode")
-                    );
+                        request.setAttribute(
+                                "pincode",
+                                rs.getString("pincode")
+                        );
+                    }
+
+                    request.getRequestDispatcher(
+                            "address.jsp"
+                    ).forward(request, response);
                 }
-
-                request.getRequestDispatcher(
-                        "address.jsp"
-                ).forward(request, response);
             }
+
+        } catch (Exception e) {
+
+            e.printStackTrace();
+
+            response.sendError(
+                    500,
+                    "Unable to load address."
+            );
         }
-
-    } catch (Exception e) {
-
-        e.printStackTrace();
-
-        response.sendError(
-                500,
-                "Unable to load address."
-        );
     }
-}
+
+
     @Override
     protected void doPost(
             HttpServletRequest request,
@@ -128,34 +127,21 @@ protected void doGet(
 
         // Check login
         if (session == null ||
-            session.getAttribute("userId") == null) {
+                session.getAttribute("userId") == null) {
 
             response.sendRedirect("login.html");
             return;
         }
 
-        int userId =
-                (Integer) session.getAttribute("userId");
+        int userId = (Integer) session.getAttribute("userId");
 
         // Get form values
-        String fullName =
-                request.getParameter("fullName");
-
-        String phone =
-                request.getParameter("phone");
-
-        String addressLine =
-                request.getParameter("addressLine");
-
-        String city =
-                request.getParameter("city");
-
-        String state =
-                request.getParameter("state");
-
-        String pincode =
-                request.getParameter("pincode");
-
+        String fullName = request.getParameter("fullName");
+        String phone = request.getParameter("phone");
+        String addressLine = request.getParameter("addressLine");
+        String city = request.getParameter("city");
+        String state = request.getParameter("state");
+        String pincode = request.getParameter("pincode");
 
         // Validation
         if (fullName == null || fullName.isBlank()
@@ -165,25 +151,16 @@ protected void doGet(
                 || state == null || state.isBlank()
                 || pincode == null || pincode.isBlank()) {
 
-            response.sendRedirect("address.html");
+            response.sendRedirect("AddressServlet");
             return;
         }
 
-
         // Database variables
-        String url =
-                System.getenv("DB_URL");
+        String url = System.getenv("DB_URL");
+        String username = System.getenv("DB_USERNAME");
+        String password = System.getenv("DB_PASSWORD");
 
-        String username =
-                System.getenv("DB_USERNAME");
-
-        String password =
-                System.getenv("DB_PASSWORD");
-
-
-        if (url == null ||
-            username == null ||
-            password == null) {
+        if (url == null || username == null || password == null) {
 
             response.sendError(
                     500,
@@ -193,76 +170,66 @@ protected void doGet(
             return;
         }
 
-
         if (url.startsWith("mysql://")) {
             url = "jdbc:" + url;
         }
 
-
         try {
 
-            Class.forName(
-                    "com.mysql.cj.jdbc.Driver"
-            );
+            Class.forName("com.mysql.cj.jdbc.Driver");
 
+            try (
+                Connection con = DriverManager.getConnection(
+                    url,
+                    username,
+                    password
+                )
+            ) {
 
-            try (Connection con =
-                    DriverManager.getConnection(
-                            url,
-                            username,
-                            password
-                    )) {
-
-
-                // Check whether address already exists
-                String checkSql = """
-                    SELECT id
-                    FROM addresses
-                    WHERE user_id = ?
-                    LIMIT 1
-                    """;
-
+                // Check existing address
+                String checkSql =
+                        "SELECT id " +
+                        "FROM addresses " +
+                        "WHERE user_id = ? " +
+                        "LIMIT 1";
 
                 int addressId = -1;
 
-
-                try (PreparedStatement ps =
-                        con.prepareStatement(checkSql)) {
+                try (
+                    PreparedStatement ps =
+                            con.prepareStatement(checkSql)
+                ) {
 
                     ps.setInt(1, userId);
 
-                    var rs = ps.executeQuery();
+                    try (ResultSet rs = ps.executeQuery()) {
 
-                    if (rs.next()) {
-                        addressId =
-                                rs.getInt("id");
+                        if (rs.next()) {
+                            addressId = rs.getInt("id");
+                        }
                     }
                 }
 
 
-                // =====================================
                 // UPDATE EXISTING ADDRESS
-                // =====================================
-
                 if (addressId != -1) {
 
-                    String updateSql = """
-                        UPDATE addresses
-                        SET
-                            customer_name = ?,
-                            full_name = ?,
-                            phone = ?,
-                            address_line = ?,
-                            city = ?,
-                            state = ?,
-                            pincode = ?,
-                            is_default = TRUE
-                        WHERE id = ?
-                        """;
+                    String updateSql =
+                            "UPDATE addresses SET " +
+                            "customer_name = ?, " +
+                            "full_name = ?, " +
+                            "phone = ?, " +
+                            "address_line = ?, " +
+                            "city = ?, " +
+                            "state = ?, " +
+                            "pincode = ?, " +
+                            "is_default = TRUE " +
+                            "WHERE id = ?";
 
-
-                    try (PreparedStatement ps =
-                            con.prepareStatement(updateSql)) {
+                    try (
+                        PreparedStatement ps =
+                                con.prepareStatement(updateSql)
+                    ) {
 
                         ps.setString(1, fullName);
                         ps.setString(2, fullName);
@@ -278,31 +245,20 @@ protected void doGet(
 
                 }
 
-                // =====================================
                 // INSERT NEW ADDRESS
-                // =====================================
-
                 else {
 
-                    String insertSql = """
-                        INSERT INTO addresses
-                        (
-                            user_id,
-                            customer_name,
-                            full_name,
-                            phone,
-                            address_line,
-                            city,
-                            state,
-                            pincode,
-                            is_default
-                        )
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)
-                        """;
+                    String insertSql =
+                            "INSERT INTO addresses " +
+                            "(user_id, customer_name, full_name, " +
+                            "phone, address_line, city, state, " +
+                            "pincode, is_default) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, TRUE)";
 
-
-                    try (PreparedStatement ps =
-                            con.prepareStatement(insertSql)) {
+                    try (
+                        PreparedStatement ps =
+                                con.prepareStatement(insertSql)
+                    ) {
 
                         ps.setInt(1, userId);
                         ps.setString(2, fullName);
@@ -318,12 +274,8 @@ protected void doGet(
                 }
             }
 
-
-            // Back to profile
-            response.sendRedirect(
-                    "profile.jsp"
-            );
-
+            // Go back to profile
+            response.sendRedirect("profile.jsp");
 
         } catch (Exception e) {
 
@@ -331,8 +283,7 @@ protected void doGet(
 
             response.sendError(
                     500,
-                    "Unable to save address: "
-                    + e.getMessage()
+                    "Unable to save address: " + e.getMessage()
             );
         }
     }
