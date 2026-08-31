@@ -574,7 +574,7 @@
 
                 <a href="index.html"
                    class="btn secondary">
-                    ← Back Home
+                    Back Home
                 </a>
 
                 <a href="order.html"
