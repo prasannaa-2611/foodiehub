@@ -297,7 +297,7 @@
                     type="submit"
                     class="save-btn">
 
-                    💾 Save Address
+                     Save Address
 
                 </button>
 
@@ -305,7 +305,7 @@
 
 
             <a href="profile.jsp" class="back">
-                ← Back to Profile
+                 Back to Profile
             </a>
 
         </div>
