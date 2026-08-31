@@ -185,7 +185,7 @@
         <div class="card">
 
             <h1>
-                📍 Delivery Address
+             Delivery Address
             </h1>
 
             <p class="subtitle">

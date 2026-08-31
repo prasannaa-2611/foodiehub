@@ -508,7 +508,7 @@ if (selectedFood == null) {
 
                         <a href="AddressServlet"
                            class="edit-link">
-                            ✏️ Edit Address
+                             Edit Address
                         </a>
 
                     </div>
@@ -570,7 +570,7 @@ if (selectedFood == null) {
                         disabled
                     <% } %>>
 
-                    🛒 Place Order
+                     Place Order
 
                 </button>
 
@@ -579,7 +579,7 @@ if (selectedFood == null) {
 
             <a href="index.html"
                class="back">
-                ← Back to Home
+                Back to Home
             </a>
 
         </div>

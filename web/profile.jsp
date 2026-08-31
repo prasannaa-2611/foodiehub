@@ -456,7 +456,7 @@
                 </h1>
 
                 <p class="welcome">
-                    Welcome to your FoodieHub profile 👋
+                    Welcome to your FoodieHub profile 
                 </p>
 
             </div>
@@ -556,7 +556,7 @@
 
                     <a href="AddressServlet"
                        class="btn primary">
-                        + Add Address
+                         Add Address
                     </a>
 
                 </div>
