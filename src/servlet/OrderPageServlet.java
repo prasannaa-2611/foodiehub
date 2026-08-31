@@ -36,7 +36,13 @@ public class OrderPageServlet extends HttpServlet {
         int userId =
                 (Integer) session.getAttribute("userId");
 
+String selectedFood = request.getParameter("food");
 
+if (selectedFood == null) {
+    selectedFood = "";
+}
+
+request.setAttribute("selectedFood", selectedFood);
         // =========================================
         // DATABASE VARIABLES
         // =========================================

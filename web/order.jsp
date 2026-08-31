@@ -44,7 +44,12 @@
     Boolean addressExists =
             (Boolean) request.getAttribute("addressExists");
 
+String selectedFood =
+        (String) request.getAttribute("selectedFood");
 
+if (selectedFood == null) {
+    selectedFood = "";
+}
     if (fullName == null) fullName = "";
     if (phone == null) phone = "";
     if (addressLine == null) addressLine = "";
@@ -422,32 +427,31 @@
                         Select Food
                     </label>
 
-                    <select
-                        id="foodName"
-                        name="foodName"
-                        required>
+                    <select id="foodName" name="foodName" required>
 
-                        <option value="">
-                            -- Choose Food --
-                        </option>
+    <option value="">-- Choose Food --</option>
 
-                        <option value="Pizza">
-                            🍕 Pizza - ₹200
-                        </option>
+    <option value="Pizza"
+        <%= "Pizza".equals(selectedFood) ? "selected" : "" %>>
+        Pizza - Rs.200
+    </option>
 
-                        <option value="Burger">
-                            🍔 Burger - ₹120
-                        </option>
+    <option value="Burger"
+        <%= "Burger".equals(selectedFood) ? "selected" : "" %>>
+        Burger - Rs.120
+    </option>
 
-                        <option value="Biryani">
-                            🍛 Biryani - ₹180
-                        </option>
+    <option value="Biryani"
+        <%= "Biryani".equals(selectedFood) ? "selected" : "" %>>
+        Biryani - Rs.180
+    </option>
 
-                        <option value="Pasta">
-                            🍝 Pasta - ₹150
-                        </option>
+    <option value="Pasta"
+        <%= "Pasta".equals(selectedFood) ? "selected" : "" %>>
+        Pasta - Rs.150
+    </option>
 
-                    </select>
+</select>
 
                 </div>
 
