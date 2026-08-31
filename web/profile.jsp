@@ -2,114 +2,118 @@
 <%@ page import="java.sql.DriverManager" %>
 <%@ page import="java.sql.PreparedStatement" %>
 <%@ page import="java.sql.ResultSet" %>
-<%@ page import="jakarta.servlet.http.HttpSession" %>
 
 <%
     // =========================================
     // CHECK LOGIN
     // =========================================
 
-    HttpSession userSession = request.getSession(false);
+    Integer userId = (Integer) session.getAttribute("userId");
 
-    if (userSession == null ||
-        userSession.getAttribute("userId") == null) {
-
+    if (userId == null) {
         response.sendRedirect("login.html");
         return;
     }
 
-    int userId = (Integer) userSession.getAttribute("userId");
+    // =========================================
+    // GET USER DETAILS FROM SESSION
+    // =========================================
 
-    String fullName =
-            (String) userSession.getAttribute("fullName");
+    String fullName = (String) session.getAttribute("fullName");
+    String email = (String) session.getAttribute("email");
+    String phone = (String) session.getAttribute("phone");
 
-    String email =
-            (String) userSession.getAttribute("email");
+    if (fullName == null) {
+        fullName = "User";
+    }
 
-    String phone =
-            (String) userSession.getAttribute("phone");
+    if (email == null) {
+        email = "";
+    }
 
+    if (phone == null) {
+        phone = "";
+    }
+
+    // =========================================
+    // DATABASE VARIABLES
+    // =========================================
+
+    String dbUrl = System.getenv("DB_URL");
+    String dbUsername = System.getenv("DB_USERNAME");
+    String dbPassword = System.getenv("DB_PASSWORD");
+
+    if (dbUrl != null && dbUrl.startsWith("mysql://")) {
+        dbUrl = "jdbc:" + dbUrl;
+    }
 
     // =========================================
     // ADDRESS VARIABLES
     // =========================================
 
-    String addressLine = null;
-    String city = null;
-    String state = null;
-    String pincode = null;
+    String addressLine = "";
+    String city = "";
+    String state = "";
+    String pincode = "";
 
-    boolean hasAddress = false;
-
-
-    // =========================================
-    // DATABASE CONNECTION
-    // =========================================
-
-    String url = System.getenv("DB_URL");
-    String username = System.getenv("DB_USERNAME");
-    String password = System.getenv("DB_PASSWORD");
-
-    if (url != null && url.startsWith("mysql://")) {
-        url = "jdbc:" + url;
-    }
-
+    boolean addressExists = false;
 
     // =========================================
-    // GET USER ADDRESS
+    // GET ADDRESS
     // =========================================
 
-    if (url != null &&
-        username != null &&
-        password != null) {
+    if (dbUrl != null
+            && dbUsername != null
+            && dbPassword != null) {
+
+        String sql =
+                "SELECT address_line, city, state, pincode " +
+                "FROM addresses " +
+                "WHERE user_id = ? " +
+                "ORDER BY id DESC " +
+                "LIMIT 1";
 
         try {
-
-            Class.forName(
-                    "com.mysql.cj.jdbc.Driver"
-            );
-
-            String sql = """
-                SELECT address_line, city, state, pincode
-                FROM addresses
-                WHERE user_id = ?
-                ORDER BY id DESC
-                LIMIT 1
-                """;
-
+            Class.forName("com.mysql.cj.jdbc.Driver");
 
             try (
-                Connection con =
-                    DriverManager.getConnection(
-                        url,
-                        username,
-                        password
-                    );
+                Connection con = DriverManager.getConnection(
+                    dbUrl,
+                    dbUsername,
+                    dbPassword
+                );
 
-                PreparedStatement ps =
-                    con.prepareStatement(sql)
+                PreparedStatement ps = con.prepareStatement(sql)
             ) {
 
                 ps.setInt(1, userId);
 
-                try (ResultSet rs =
-                        ps.executeQuery()) {
+                try (ResultSet rs = ps.executeQuery()) {
 
                     if (rs.next()) {
 
-                        addressLine =
-                                rs.getString("address_line");
+                        addressExists = true;
 
-                        city =
-                                rs.getString("city");
+                        addressLine = rs.getString("address_line");
+                        city = rs.getString("city");
+                        state = rs.getString("state");
+                        pincode = rs.getString("pincode");
 
-                        state =
-                                rs.getString("state");
+                        if (addressLine == null) {
+                            addressLine = "";
+                        }
 
-                        pincode =
-                                rs.getString("pincode");
+                        if (city == null) {
+                            city = "";
+                        }
 
-                        hasAddress = true;
+                        if (state == null) {
+                            state = "";
+                        }
+
+                        if (pincode == null) {
+                            pincode = "";
+                        }
                     }
                 }
             }
@@ -119,8 +123,60 @@
             e.printStackTrace();
         }
     }
-%>
 
+    // =========================================
+    // HTML ESCAPE
+    // =========================================
+
+    String safeName = fullName
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;");
+
+    String safeEmail = email
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;");
+
+    String safePhone = phone
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;");
+
+    String safeAddress = addressLine
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;");
+
+    String safeCity = city
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;");
+
+    String safeState = state
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;");
+
+    String safePincode = pincode
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace("\"", "&quot;")
+            .replace("'", "&#39;");
+%>
 
 <!DOCTYPE html>
 
@@ -133,8 +189,7 @@
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>FoodieHub - My Profile</title>
-
+    <title>FoodieHub - Profile</title>
 
     <style>
 
@@ -144,7 +199,6 @@
             padding: 0;
         }
 
-
         body {
             font-family: Arial, sans-serif;
             background: #fff8f0;
@@ -152,306 +206,214 @@
             min-height: 100vh;
         }
 
-
-        /* ==============================
-           NAVBAR
-        ============================== */
+        /* NAVBAR */
 
         nav {
             height: 70px;
             background: white;
-
             display: flex;
             align-items: center;
             justify-content: space-between;
-
             padding: 0 8%;
-
-            box-shadow:
-                0 2px 10px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
-
 
         .logo {
             font-size: 26px;
             font-weight: bold;
         }
 
-
         .logo span {
             color: #ff6b00;
         }
 
-
         nav a {
             text-decoration: none;
             color: #333;
-
-            margin-left: 25px;
-
+            margin-left: 20px;
             font-weight: bold;
         }
-
 
         nav a:hover {
             color: #ff6b00;
         }
 
-
-        /* ==============================
-           PAGE
-        ============================== */
+        /* PAGE */
 
         .page {
             width: 90%;
-            max-width: 650px;
-
-            margin: 50px auto;
+            max-width: 750px;
+            margin: 45px auto;
         }
-
 
         .card {
             background: white;
-
-            padding: 40px;
-
             border-radius: 20px;
-
-            box-shadow:
-                0 10px 30px rgba(0,0,0,0.1);
+            padding: 35px;
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
+        /* PROFILE HEADER */
 
-        /* ==============================
-           PROFILE ICON
-        ============================== */
+        .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
 
-        .profile-icon {
+        .avatar {
             width: 90px;
             height: 90px;
-
-            background: #fff1e4;
-
             border-radius: 50%;
+            background: #ff6b00;
+            color: white;
+            margin: 0 auto 18px;
 
             display: flex;
             align-items: center;
             justify-content: center;
 
-            font-size: 45px;
-
-            margin: 0 auto 20px;
+            font-size: 38px;
+            font-weight: bold;
         }
 
-
         h1 {
-            text-align: center;
-
+            font-size: 30px;
             margin-bottom: 8px;
         }
 
-
         .welcome {
-            text-align: center;
-
             color: #777;
-
-            margin-bottom: 30px;
         }
 
+        /* SECTION */
 
-        /* ==============================
-           INFORMATION
-        ============================== */
-
-        .info-box {
-            background: #fff8f0;
-
-            padding: 20px;
-
-            border-radius: 15px;
-
+        .section-title {
+            font-size: 22px;
             margin-bottom: 20px;
         }
 
-
-        .info-title {
-            font-size: 20px;
-
-            font-weight: bold;
-
-            color: #ff6b00;
-
-            margin-bottom: 15px;
-        }
-
-
         .row {
             display: flex;
-
             justify-content: space-between;
-
             gap: 20px;
-
-            padding: 12px 0;
-
+            padding: 15px 0;
             border-bottom: 1px solid #eee;
         }
-
 
         .row:last-child {
             border-bottom: none;
         }
 
-
         .label {
             color: #777;
+            font-weight: bold;
         }
 
-
         .value {
-            font-weight: bold;
-
             text-align: right;
-
+            font-weight: bold;
             word-break: break-word;
         }
 
-
-        /* ==============================
-           ADDRESS
-        ============================== */
+        /* ADDRESS */
 
         .address-box {
             background: #fff8f0;
-
+            border-radius: 14px;
             padding: 20px;
-
-            border-radius: 15px;
-
-            margin-bottom: 25px;
-        }
-
-
-        .address-title {
-            font-size: 20px;
-
-            font-weight: bold;
-
-            color: #ff6b00;
-
-            margin-bottom: 15px;
-        }
-
-
-        .address {
-            color: #444;
-
             line-height: 1.7;
-
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
-
 
         .no-address {
             color: #777;
-
-            line-height: 1.6;
-
-            margin-bottom: 15px;
-        }
-
-
-        /* ==============================
-           BUTTONS
-        ============================== */
-
-        .button {
-            display: block;
-
-            width: 100%;
-
             text-align: center;
-
-            text-decoration: none;
-
-            padding: 14px;
-
-            border-radius: 10px;
-
-            font-weight: bold;
-
-            margin-top: 12px;
+            padding: 15px;
         }
 
+        /* BUTTONS */
 
-        .edit-btn {
+        .buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            text-decoration: none;
+            padding: 13px 22px;
+            border-radius: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .primary {
             background: #ff6b00;
-
             color: white;
         }
 
-
-        .edit-btn:hover {
+        .primary:hover {
             background: #e85d00;
         }
 
-
-        .order-btn {
+        .secondary {
             border: 2px solid #ff6b00;
-
             color: #ff6b00;
+            background: white;
         }
 
-
-        .order-btn:hover {
-            background: #ff6b00;
-
-            color: white;
+        .secondary:hover {
+            background: #fff1e4;
         }
 
+        /* FOOTER */
 
-        /* ==============================
-           MOBILE
-        ============================== */
+        footer {
+            text-align: center;
+            color: #777;
+            padding: 25px;
+        }
+
+        /* MOBILE */
 
         @media (max-width: 600px) {
 
             nav {
                 height: auto;
-
                 padding: 20px;
-
                 flex-direction: column;
-
                 gap: 15px;
             }
-
 
             nav a {
                 margin: 0 7px;
             }
 
-
             .page {
-                margin: 30px auto;
+                margin: 25px auto;
             }
-
 
             .card {
                 padding: 25px 20px;
             }
 
-
             .row {
                 flex-direction: column;
-
                 gap: 5px;
             }
 
-
             .value {
                 text-align: left;
+            }
+
+            .buttons {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
             }
         }
 
@@ -459,83 +421,60 @@
 
 </head>
 
-
 <body>
 
+    <!-- NAVIGATION -->
 
-<!-- ==============================
-     NAVIGATION
-============================== -->
+    <nav>
 
-<nav>
-
-    <div class="logo">
-        Foodie<span>Hub</span>
-    </div>
-
-
-    <div>
-
-        <a href="index.html">
-            Home
-        </a>
-
-        <a href="order.html">
-            Order
-        </a>
-
-        <a href="LogoutServlet">
-            Logout
-        </a>
-
-    </div>
-
-</nav>
-
-
-<!-- ==============================
-     PROFILE
-============================== -->
-
-<div class="page">
-
-    <div class="card">
-
-
-        <div class="profile-icon">
-            👤
+        <div class="logo">
+            Foodie<span>Hub</span>
         </div>
 
+        <div>
+            <a href="index.html">Home</a>
+            <a href="order.html">Order</a>
+        </div>
 
-        <h1>
-            My Profile
-        </h1>
-
-
-        <p class="welcome">
-            Welcome, <%= fullName %>! 👋
-        </p>
+    </nav>
 
 
-        <!-- ==========================
-             PERSONAL INFORMATION
-        =========================== -->
+    <!-- PROFILE -->
 
-        <div class="info-box">
+    <div class="page">
 
-            <div class="info-title">
-                👤 Personal Information
+        <div class="card">
+
+            <div class="profile-header">
+
+                <div class="avatar">
+                    <%= safeName.substring(0, 1).toUpperCase() %>
+                </div>
+
+                <h1>
+                    <%= safeName %>
+                </h1>
+
+                <p class="welcome">
+                    Welcome to your FoodieHub profile 👋
+                </p>
+
             </div>
+
+
+            <h2 class="section-title">
+                Personal Information
+            </h2>
 
 
             <div class="row">
 
                 <span class="label">
-                    Full Name
+                    Name
                 </span>
 
                 <span class="value">
-                    <%= fullName %>
+                    <%= safeName %>
                 </span>
 
             </div>
@@ -548,7 +487,7 @@
                 </span>
 
                 <span class="value">
-                    <%= email %>
+                    <%= safeEmail %>
                 </span>
 
             </div>
@@ -561,7 +500,7 @@
                 </span>
 
                 <span class="value">
-                    <%= phone %>
+                    <%= safePhone %>
                 </span>
 
             </div>
@@ -569,89 +508,92 @@
         </div>
 
 
-        <!-- ==========================
-             DELIVERY ADDRESS
-        =========================== -->
+        <!-- ADDRESS CARD -->
 
-        <div class="address-box">
+        <div class="card">
 
-            <div class="address-title">
+            <h2 class="section-title">
                 📍 Delivery Address
-            </div>
+            </h2>
 
+            <% if (addressExists) { %>
 
-            <% if (hasAddress) { %>
-
-                <div class="address">
+                <div class="address-box">
 
                     <strong>
-                        <%= fullName %>
+                        <%= safeAddress %>
                     </strong>
 
                     <br>
 
-                    <%= addressLine %>
-
-                    <br>
-
-                    <%= city %>,
-                    <%= state %>
-
-                    <br>
-
-                    PIN:
-                    <%= pincode %>
+                    <%= safeCity %>,
+                    <%= safeState %>
+                    -
+                    <%= safePincode %>
 
                 </div>
 
+                <div class="buttons">
 
-                <a href="address.html"
-                   class="button edit-btn">
+                    <a href="address.html"
+                       class="btn primary">
+                        Edit Address
+                    </a>
 
-                    ✏️ Edit Address
-
-                </a>
-
+                </div>
 
             <% } else { %>
 
+                <div class="no-address">
 
-                <p class="no-address">
+                    <p>
+                        You haven't added a delivery address yet.
+                    </p>
 
-                    You haven't added a delivery address yet.
+                </div>
 
-                </p>
+                <div class="buttons">
 
+                    <a href="address.html"
+                       class="btn primary">
+                        + Add Address
+                    </a>
 
-                <a href="address.html"
-                   class="button edit-btn">
-
-                    📍 Add Address
-
-                </a>
-
+                </div>
 
             <% } %>
 
         </div>
 
 
-        <!-- ==========================
-             ORDER BUTTON
-        =========================== -->
+        <!-- ACTIONS -->
 
-        <a href="order.html"
-           class="button order-btn">
+        <div class="card">
 
-            🍕 Order Food
+            <div class="buttons">
 
-        </a>
+                <a href="index.html"
+                   class="btn secondary">
+                    ← Back Home
+                </a>
 
+                <a href="order.html"
+                   class="btn primary">
+                    🍴 Order Food
+                </a>
+
+            </div>
+
+        </div>
 
     </div>
 
-</div>
 
+    <footer>
+
+        © 2026 FoodieHub • Delicious food, happy moments ❤️
+
+    </footer>
 
 </body>
 
