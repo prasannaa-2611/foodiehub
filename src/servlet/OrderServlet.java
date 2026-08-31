@@ -329,18 +329,7 @@ public class OrderServlet extends HttpServlet {
                 // SEND CONFIRMATION EMAIL
                 // =================================================
 
-                sendOrderEmail(
-                        customerEmail,
-                        customerName.trim(),
-                        foodName.trim(),
-                        quantity,
-                        fullName.trim(),
-                        phone.trim(),
-                        addressLine.trim(),
-                        city.trim(),
-                        state.trim(),
-                        pincode.trim()
-                );
+               
             }
 
             // =====================================================
@@ -943,3 +932,87 @@ public class OrderServlet extends HttpServlet {
                 );
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
