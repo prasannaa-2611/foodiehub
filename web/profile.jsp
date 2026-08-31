@@ -513,7 +513,7 @@
         <div class="card">
 
             <h2 class="section-title">
-                📍 Delivery Address
+             Delivery Address
             </h2>
 
             <% if (addressExists) { %>
@@ -579,7 +579,7 @@
 
                 <a href="order.html"
                    class="btn primary">
-                    🍴 Order Food
+                    Order Food
                 </a>
 
             </div>
