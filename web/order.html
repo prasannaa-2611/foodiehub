@@ -22,6 +22,7 @@
         }
 
         /* NAVBAR */
+
         nav {
             background: white;
             height: 70px;
@@ -29,6 +30,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
         }
 
@@ -53,6 +55,7 @@
         }
 
         /* PAGE */
+
         .page {
             width: 90%;
             max-width: 650px;
@@ -63,6 +66,7 @@
             background: white;
             padding: 40px;
             border-radius: 20px;
+
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
 
@@ -82,7 +86,16 @@
             margin-bottom: 30px;
         }
 
+        /* SECTION TITLE */
+
+        .section-title {
+            margin: 30px 0 20px;
+            font-size: 22px;
+            color: #222;
+        }
+
         /* FORM */
+
         .form-group {
             margin-bottom: 22px;
         }
@@ -97,8 +110,10 @@
         select {
             width: 100%;
             padding: 14px;
+
             border: 1px solid #ddd;
             border-radius: 10px;
+
             font-size: 16px;
             background: white;
         }
@@ -110,15 +125,21 @@
         }
 
         /* BUTTON */
+
         .submit-btn {
             width: 100%;
             border: none;
+
             padding: 15px;
+
             background: #ff6b00;
             color: white;
+
             font-size: 17px;
             font-weight: bold;
+
             border-radius: 10px;
+
             cursor: pointer;
         }
 
@@ -129,13 +150,17 @@
         .back {
             display: block;
             text-align: center;
+
             margin-top: 25px;
+
             color: #ff6b00;
             text-decoration: none;
+
             font-weight: bold;
         }
 
         /* FOOTER */
+
         footer {
             text-align: center;
             color: #777;
@@ -143,6 +168,7 @@
         }
 
         /* MOBILE */
+
         @media (max-width: 600px) {
 
             nav {
@@ -166,11 +192,13 @@
             }
         }
     </style>
+
 </head>
 
 <body>
 
     <!-- NAVIGATION -->
+
     <nav>
 
         <div class="logo">
@@ -184,7 +212,8 @@
     </nav>
 
 
-    <!-- ORDER FORM -->
+    <!-- ORDER PAGE -->
+
     <div class="page">
 
         <div class="card">
@@ -198,8 +227,19 @@
             </p>
 
 
-            <!-- IMPORTANT: This connects to your Java Servlet -->
+            <!-- IMPORTANT:
+                 This sends everything to OrderServlet
+            -->
+
             <form action="OrderServlet" method="post">
+
+
+                <!-- CUSTOMER INFORMATION -->
+
+                <h2 class="section-title">
+                    👤 Customer Information
+                </h2>
+
 
                 <div class="form-group">
 
@@ -215,6 +255,13 @@
                         required>
 
                 </div>
+
+
+                <!-- FOOD INFORMATION -->
+
+                <h2 class="section-title">
+                    🍴 Order Details
+                </h2>
 
 
                 <div class="form-group">
@@ -233,19 +280,19 @@
                         </option>
 
                         <option value="Pizza">
-                            🍕 Pizza - &#8377;200
+                            🍕 Pizza - ₹200
                         </option>
 
                         <option value="Burger">
-                            🍔 Burger - &#8377;120
+                            🍔 Burger - ₹120
                         </option>
 
                         <option value="Biryani">
-                            🍛 Biryani - &#8377;180
+                            🍛 Biryani - ₹180
                         </option>
 
                         <option value="Pasta">
-                            🍝 Pasta - &#8377;150
+                            🍝 Pasta - ₹150
                         </option>
 
                     </select>
@@ -271,6 +318,112 @@
                 </div>
 
 
+                <!-- DELIVERY ADDRESS -->
+
+                <h2 class="section-title">
+                    📍 Delivery Address
+                </h2>
+
+
+                <div class="form-group">
+
+                    <label for="fullName">
+                        Full Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="fullName"
+                        name="fullName"
+                        placeholder="Enter your full name"
+                        required>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="phone">
+                        Phone Number
+                    </label>
+
+                    <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        placeholder="Enter your phone number"
+                        required>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="addressLine">
+                        Address
+                    </label>
+
+                    <input
+                        type="text"
+                        id="addressLine"
+                        name="addressLine"
+                        placeholder="House number, street, area"
+                        required>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="city">
+                        City
+                    </label>
+
+                    <input
+                        type="text"
+                        id="city"
+                        name="city"
+                        placeholder="Enter your city"
+                        required>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="state">
+                        State
+                    </label>
+
+                    <input
+                        type="text"
+                        id="state"
+                        name="state"
+                        placeholder="Enter your state"
+                        required>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="pincode">
+                        PIN Code
+                    </label>
+
+                    <input
+                        type="text"
+                        id="pincode"
+                        name="pincode"
+                        placeholder="Enter PIN code"
+                        maxlength="10"
+                        required>
+
+                </div>
+
+
+                <!-- SUBMIT -->
+
                 <button
                     type="submit"
                     class="submit-btn">
@@ -292,7 +445,9 @@
 
 
     <footer>
+
         © 2026 FoodieHub • Delicious food, happy moments ❤️
+
     </footer>
 
 </body>
