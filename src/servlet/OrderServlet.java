@@ -3,6 +3,15 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
+import java.util.Properties;
+
+import jakarta.mail.Authenticator;
+import jakarta.mail.Message;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -10,16 +19,6 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import jakarta.mail.Message;
-import jakarta.mail.Session;
-import jakarta.mail.Transport;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
-
-import java.util.Properties;
-
-import jakarta.mail.Authenticator;
-import jakarta.mail.PasswordAuthentication;
 
 @WebServlet("/OrderServlet")
 public class OrderServlet extends HttpServlet {
@@ -31,9 +30,7 @@ public class OrderServlet extends HttpServlet {
             throws ServletException, IOException {
 
         response.setContentType("text/html;charset=UTF-8");
-
         PrintWriter out = response.getWriter();
-
 
         // =====================================================
         // GET ORDER DETAILS
@@ -41,21 +38,31 @@ public class OrderServlet extends HttpServlet {
 
         String customerName =
                 request.getParameter("customerName");
-HttpSession session = request.getSession(false);
 
-if (session == null || session.getAttribute("email") == null) {
-    showError(out, "User email not found. Please login again.");
-    return;
-}
-
-String customerEmail =
-        (String) session.getAttribute("email");
         String foodName =
                 request.getParameter("foodName");
 
         String quantityText =
                 request.getParameter("quantity");
 
+        // =====================================================
+        // GET LOGGED-IN USER EMAIL
+        // =====================================================
+
+        HttpSession session = request.getSession(false);
+
+        if (session == null ||
+                session.getAttribute("email") == null) {
+
+            showError(
+                    out,
+                    "User email not found. Please login again."
+            );
+            return;
+        }
+
+        String customerEmail =
+                (String) session.getAttribute("email");
 
         // =====================================================
         // GET ADDRESS DETAILS
@@ -79,20 +86,28 @@ String customerEmail =
         String pincode =
                 request.getParameter("pincode");
 
-
         // =====================================================
         // VALIDATION
         // =====================================================
 
-        if (customerName == null || customerName.trim().isEmpty()
-                || foodName == null || foodName.trim().isEmpty()
-                || quantityText == null || quantityText.trim().isEmpty()
-                || fullName == null || fullName.trim().isEmpty()
-                || phone == null || phone.trim().isEmpty()
-                || addressLine == null || addressLine.trim().isEmpty()
-                || city == null || city.trim().isEmpty()
-                || state == null || state.trim().isEmpty()
-                || pincode == null || pincode.trim().isEmpty()) {
+        if (customerName == null ||
+                customerName.trim().isEmpty()
+                || foodName == null ||
+                foodName.trim().isEmpty()
+                || quantityText == null ||
+                quantityText.trim().isEmpty()
+                || fullName == null ||
+                fullName.trim().isEmpty()
+                || phone == null ||
+                phone.trim().isEmpty()
+                || addressLine == null ||
+                addressLine.trim().isEmpty()
+                || city == null ||
+                city.trim().isEmpty()
+                || state == null ||
+                state.trim().isEmpty()
+                || pincode == null ||
+                pincode.trim().isEmpty()) {
 
             showError(
                     out,
@@ -102,7 +117,6 @@ String customerEmail =
             return;
         }
 
-
         // =====================================================
         // CONVERT QUANTITY
         // =====================================================
@@ -111,7 +125,8 @@ String customerEmail =
 
         try {
 
-            quantity = Integer.parseInt(quantityText);
+            quantity =
+                    Integer.parseInt(quantityText);
 
             if (quantity < 1 || quantity > 20) {
 
@@ -133,7 +148,6 @@ String customerEmail =
             return;
         }
 
-
         // =====================================================
         // DATABASE ENVIRONMENT VARIABLES
         // =====================================================
@@ -146,7 +160,6 @@ String customerEmail =
 
         String password =
                 System.getenv("DB_PASSWORD");
-
 
         // =====================================================
         // CHECK ENVIRONMENT VARIABLES
@@ -162,8 +175,8 @@ String customerEmail =
             return;
         }
 
-
-        if (username == null || username.isBlank()) {
+        if (username == null ||
+                username.isBlank()) {
 
             showError(
                     out,
@@ -173,8 +186,8 @@ String customerEmail =
             return;
         }
 
-
-        if (password == null || password.isBlank()) {
+        if (password == null ||
+                password.isBlank()) {
 
             showError(
                     out,
@@ -183,7 +196,6 @@ String customerEmail =
 
             return;
         }
-
 
         // =====================================================
         // CONVERT MYSQL URL TO JDBC URL
@@ -194,7 +206,6 @@ String customerEmail =
             url = "jdbc:" + url;
         }
 
-
         // =====================================================
         // SQL QUERIES
         // =====================================================
@@ -204,7 +215,6 @@ String customerEmail =
             (customer_name, food_name, quantity)
             VALUES (?, ?, ?)
             """;
-
 
         String addressSql = """
             INSERT INTO addresses
@@ -221,7 +231,6 @@ String customerEmail =
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """;
 
-
         // =====================================================
         // DATABASE OPERATION
         // =====================================================
@@ -229,14 +238,11 @@ String customerEmail =
         try {
 
             // Load MySQL driver
-
             Class.forName(
                     "com.mysql.cj.jdbc.Driver"
             );
 
-
             // Connect to database
-
             try (
                 Connection con =
                         DriverManager.getConnection(
@@ -251,7 +257,6 @@ String customerEmail =
                 PreparedStatement addressPs =
                         con.prepareStatement(addressSql)
             ) {
-
 
                 // =================================================
                 // SAVE ORDER
@@ -273,7 +278,6 @@ String customerEmail =
                 );
 
                 orderPs.executeUpdate();
-
 
                 // =================================================
                 // SAVE ADDRESS
@@ -320,20 +324,24 @@ String customerEmail =
                 );
 
                 addressPs.executeUpdate();
-                sendOrderEmail(
-        customerEmail,
-        customerName.trim(),
-        foodName.trim(),
-        quantity,
-        fullName.trim(),
-        phone.trim(),
-        addressLine.trim(),
-        city.trim(),
-        state.trim(),
-        pincode.trim()
-);
-            }
 
+                // =================================================
+                // SEND CONFIRMATION EMAIL
+                // =================================================
+
+                sendOrderEmail(
+                        customerEmail,
+                        customerName.trim(),
+                        foodName.trim(),
+                        quantity,
+                        fullName.trim(),
+                        phone.trim(),
+                        addressLine.trim(),
+                        city.trim(),
+                        state.trim(),
+                        pincode.trim()
+                );
+            }
 
             // =====================================================
             // SUCCESS PAGE
@@ -341,7 +349,6 @@ String customerEmail =
 
             out.println("""
                 <!DOCTYPE html>
-
                 <html lang="en">
 
                 <head>
@@ -356,7 +363,6 @@ String customerEmail =
                         FoodieHub - Order Confirmed
                     </title>
 
-
                     <style>
 
                         * {
@@ -365,212 +371,124 @@ String customerEmail =
                             box-sizing: border-box;
                         }
 
-
                         body {
-
                             font-family: Arial, sans-serif;
-
                             background: #fff8f0;
-
                             min-height: 100vh;
-
                             display: flex;
-
                             justify-content: center;
-
                             align-items: center;
-
                             padding: 20px;
                         }
 
-
                         .success-card {
-
                             width: 100%;
-
                             max-width: 600px;
-
                             background: white;
-
                             padding: 45px 35px;
-
                             border-radius: 24px;
-
                             text-align: center;
-
                             box-shadow:
                                 0 15px 40px
                                 rgba(0,0,0,0.12);
                         }
 
-
                         .check {
-
                             width: 80px;
-
                             height: 80px;
-
                             margin: 0 auto 20px;
-
                             background: #ff6b00;
-
                             color: white;
-
                             border-radius: 50%;
-
                             display: flex;
-
                             align-items: center;
-
                             justify-content: center;
-
                             font-size: 42px;
-
                             font-weight: bold;
                         }
 
-
                         h1 {
-
                             color: #222;
-
                             font-size: 30px;
-
                             margin-bottom: 10px;
                         }
 
-
                         .subtitle {
-
                             color: #777;
-
                             margin-bottom: 30px;
                         }
 
-
                         .order-box {
-
                             background: #fff8f0;
-
                             border-radius: 15px;
-
                             padding: 20px;
-
                             margin-bottom: 28px;
-
                             text-align: left;
                         }
 
-
                         .row {
-
                             display: flex;
-
-                            justify-content:
-                                space-between;
-
+                            justify-content: space-between;
                             padding: 13px 0;
-
-                            border-bottom:
-                                1px solid #eee;
-
+                            border-bottom: 1px solid #eee;
                             gap: 20px;
                         }
 
-
                         .row:last-child {
-
                             border-bottom: none;
                         }
 
-
                         .label {
-
                             color: #777;
                         }
 
-
                         .value {
-
                             color: #222;
-
                             font-weight: bold;
-
                             text-align: right;
                         }
 
-
                         .address {
-
                             margin-top: 20px;
-
                             padding-top: 20px;
-
-                            border-top:
-                                1px solid #eee;
+                            border-top: 1px solid #eee;
                         }
 
-
                         .address-title {
-
                             font-size: 18px;
-
                             font-weight: bold;
-
                             margin-bottom: 12px;
-
                             color: #ff6b00;
                         }
 
-
                         .address-text {
-
                             color: #555;
-
                             line-height: 1.7;
-
                             text-align: right;
                         }
 
-
                         .home-btn {
-
                             display: inline-block;
-
                             background: #ff6b00;
-
                             color: white;
-
                             text-decoration: none;
-
                             padding: 14px 28px;
-
                             border-radius: 10px;
-
                             font-weight: bold;
                         }
 
-
                         .home-btn:hover {
-
                             background: #e85d00;
                         }
 
-
                         .brand {
-
                             margin-top: 25px;
-
                             color: #999;
-
                             font-size: 14px;
                         }
 
-
                         .brand span {
-
                             color: #ff6b00;
-
                             font-weight: bold;
                         }
 
@@ -578,33 +496,24 @@ String customerEmail =
 
                 </head>
 
-
                 <body>
 
-
                     <div class="success-card">
-
 
                         <div class="check">
                             ✓
                         </div>
 
-
                         <h1>
                             Order Placed Successfully!
                         </h1>
 
-
                         <p class="subtitle">
-
                             Thank you for ordering
                             with FoodieHub 🍴
-
                         </p>
 
-
                         <div class="order-box">
-
 
                             <div class="row">
 
@@ -624,7 +533,6 @@ String customerEmail =
 
                             </div>
 
-
                             <div class="row">
 
                                 <span class="label">
@@ -643,7 +551,6 @@ String customerEmail =
 
                             </div>
 
-
                             <div class="row">
 
                                 <span class="label">
@@ -659,7 +566,6 @@ String customerEmail =
                                 </span>
 
                             </div>
-
 
                             <div class="address">
 
@@ -709,9 +615,7 @@ String customerEmail =
 
                             </div>
 
-
                         </div>
-
 
                         <a href="index.html"
                            class="home-btn">
@@ -720,23 +624,20 @@ String customerEmail =
 
                         </a>
 
-
                         <p class="brand">
 
                             © 2026
+
                             <span>FoodieHub</span>
 
                         </p>
 
-
                     </div>
-
 
                 </body>
 
                 </html>
                 """);
-
 
         } catch (Exception e) {
 
@@ -749,6 +650,147 @@ String customerEmail =
         }
     }
 
+    // =========================================================
+    // SEND ORDER EMAIL
+    // =========================================================
+
+    private void sendOrderEmail(
+            String customerEmail,
+            String customerName,
+            String foodName,
+            int quantity,
+            String fullName,
+            String phone,
+            String addressLine,
+            String city,
+            String state,
+            String pincode)
+            throws Exception {
+
+        String senderEmail =
+                System.getenv("EMAIL_USERNAME");
+
+        String senderPassword =
+                System.getenv("EMAIL_PASSWORD");
+
+        // =====================================================
+        // CHECK EMAIL ENVIRONMENT VARIABLES
+        // =====================================================
+
+        if (senderEmail == null ||
+                senderEmail.isBlank()) {
+
+            throw new Exception(
+                    "EMAIL_USERNAME is missing."
+            );
+        }
+
+        if (senderPassword == null ||
+                senderPassword.isBlank()) {
+
+            throw new Exception(
+                    "EMAIL_PASSWORD is missing."
+            );
+        }
+
+        // =====================================================
+        // GMAIL SMTP SETTINGS
+        // =====================================================
+
+        Properties props =
+                new Properties();
+
+        props.put(
+                "mail.smtp.auth",
+                "true"
+        );
+
+        props.put(
+                "mail.smtp.starttls.enable",
+                "true"
+        );
+
+        props.put(
+                "mail.smtp.host",
+                "smtp.gmail.com"
+        );
+
+        props.put(
+                "mail.smtp.port",
+                "587"
+        );
+
+        // =====================================================
+        // CREATE MAIL SESSION
+        // =====================================================
+
+        Session mailSession =
+                Session.getInstance(
+                        props,
+                        new Authenticator() {
+
+                            @Override
+                            protected PasswordAuthentication
+                            getPasswordAuthentication() {
+
+                                return new PasswordAuthentication(
+                                        senderEmail,
+                                        senderPassword
+                                );
+                            }
+                        }
+                );
+
+        // =====================================================
+        // CREATE EMAIL
+        // =====================================================
+
+        Message message =
+                new MimeMessage(mailSession);
+
+        message.setFrom(
+                new InternetAddress(senderEmail)
+        );
+
+        message.setRecipients(
+                Message.RecipientType.TO,
+                InternetAddress.parse(
+                        customerEmail
+                )
+        );
+
+        message.setSubject(
+                "FoodieHub - Order Confirmed"
+        );
+
+        String emailBody =
+                "Hello " + customerName + ",\n\n"
+                + "Your FoodieHub order has been placed successfully!\n\n"
+
+                + "ORDER DETAILS\n"
+                + "--------------------------\n"
+                + "Food: " + foodName + "\n"
+                + "Quantity: " + quantity + "\n\n"
+
+                + "DELIVERY ADDRESS\n"
+                + "--------------------------\n"
+                + "Name: " + fullName + "\n"
+                + "Phone: " + phone + "\n"
+                + "Address: " + addressLine + "\n"
+                + "City: " + city + "\n"
+                + "State: " + state + "\n"
+                + "Pincode: " + pincode + "\n\n"
+
+                + "Thank you for ordering with FoodieHub!\n";
+
+        message.setText(emailBody);
+
+        // =====================================================
+        // SEND EMAIL
+        // =====================================================
+
+        Transport.send(message);
+    }
 
     // =========================================================
     // ERROR PAGE
@@ -758,14 +800,12 @@ String customerEmail =
             PrintWriter out,
             String message) {
 
-
         if (message == null ||
-            message.isBlank()) {
+                message.isBlank()) {
 
             message =
-                "Unknown database error.";
+                    "Unknown database error.";
         }
-
 
         out.println("""
             <!DOCTYPE html>
@@ -784,90 +824,55 @@ String customerEmail =
                     FoodieHub - Error
                 </title>
 
-
                 <style>
 
                     * {
                         box-sizing: border-box;
                     }
 
-
                     body {
-
                         font-family: Arial, sans-serif;
-
                         background: #fff8f0;
-
                         min-height: 100vh;
-
                         display: flex;
-
                         align-items: center;
-
                         justify-content: center;
-
                         padding: 20px;
                     }
 
-
                     .error-card {
-
                         background: white;
-
                         width: 100%;
-
                         max-width: 600px;
-
                         padding: 40px;
-
                         border-radius: 20px;
-
                         text-align: center;
-
                         box-shadow:
                             0 12px 35px
                             rgba(0,0,0,0.12);
                     }
 
-
                     h1 {
-
                         color: #ff6b00;
-
                         margin-bottom: 15px;
                     }
 
-
                     .error {
-
                         background: #fff3e8;
-
                         padding: 15px;
-
                         border-radius: 10px;
-
                         color: #555;
-
                         word-break: break-word;
                     }
 
-
                     a {
-
                         display: inline-block;
-
                         margin-top: 25px;
-
                         background: #ff6b00;
-
                         color: white;
-
                         text-decoration: none;
-
                         padding: 13px 25px;
-
                         border-radius: 10px;
-
                         font-weight: bold;
                     }
 
@@ -875,17 +880,13 @@ String customerEmail =
 
             </head>
 
-
             <body>
 
-
                 <div class="error-card">
-
 
                     <h1>
                         Something went wrong!
                     </h1>
-
 
                     <p class="error">
             """);
@@ -897,16 +898,11 @@ String customerEmail =
         out.println("""
                     </p>
 
-
                     <a href="order.html">
-
                         ← Back to Order
-
                     </a>
 
-
                 </div>
-
 
             </body>
 
@@ -914,202 +910,36 @@ String customerEmail =
             """);
     }
 
-
     // =========================================================
     // HTML ESCAPE
     // =========================================================
-private void sendOrderEmail(
-        String customerEmail,
-        String customerName,
-        String foodName,
-        int quantity,
-        String fullName,
-        String phone,
-        String addressLine,
-        String city,
-        String state,
-        String pincode) throws Exception {
 
-    String emailUsername = System.getenv("EMAIL_USERNAME");
-    String emailPassword = System.getenv("EMAIL_PASSWORD");
-
-    if (emailUsername == null || emailUsername.isBlank()) {
-        throw new Exception("EMAIL_USERNAME is missing.");
-    }
-
-    if (emailPassword == null || emailPassword.isBlank()) {
-        throw new Exception("EMAIL_PASSWORD is missing.");
-    }
-
-    Properties props = new Properties();
-
-    props.put(
-        "mail.smtp.host",
-        "smtp.gmail.com"
-    );
-
-    props.put(
-        "mail.smtp.port",
-        "587"
-    );
-
-    props.put(
-        "mail.smtp.auth",
-        "true"
-    );
-
-    props.put(
-        "mail.smtp.starttls.enable",
-        "true"
-    );
-
-    Session mailSession = Session.getInstance(
-        props,
-        new jakarta.mail.Authenticator() {
-
-            @Override
-            protected jakarta.mail.PasswordAuthentication getPasswordAuthentication() {
-                return new jakarta.mail.PasswordAuthentication(
-                    emailUsername,
-                    emailPassword
-                );
-            }
-        }
-    );
-
-    Message message = new MimeMessage(mailSession);
-
-    message.setFrom(
-        new InternetAddress(emailUsername)
-    );
-
-    message.setRecipients(
-        Message.RecipientType.TO,
-        InternetAddress.parse(customerEmail)
-    );
-
-    message.setSubject(
-        "FoodieHub - Order Confirmed 🍴"
-    );
-
-    String emailBody =
-            "Hello " + customerName + ",\n\n"
-            + "Your FoodieHub order has been placed successfully!\n\n"
-            + "ORDER DETAILS\n"
-            + "--------------------------\n"
-            + "Food: " + foodName + "\n"
-            + "Quantity: " + quantity + "\n\n"
-            + "DELIVERY ADDRESS\n"
-            + "--------------------------\n"
-            + "Name: " + fullName + "\n"
-            + "Phone: " + phone + "\n"
-            + "Address: " + addressLine + "\n"
-            + "City: " + city + "\n"
-            + "State: " + state + "\n"
-            + "Pincode: " + pincode + "\n\n"
-            + "Thank you for ordering with FoodieHub! ❤️\n";
-
-    message.setText(emailBody);
-
-    Transport.send(message);
-}
     private String escapeHtml(String text) {
 
         if (text == null) {
-
             return "";
         }
 
-
         return text
-
                 .replace(
-                    "&",
-                    "&amp;"
+                        "&",
+                        "&amp;"
                 )
-
                 .replace(
-                    "<",
-                    "&lt;"
+                        "<",
+                        "&lt;"
                 )
-
                 .replace(
-                    ">",
-                    "&gt;"
+                        ">",
+                        "&gt;"
                 )
-
                 .replace(
-                    "\"",
-                    "&quot;"
+                        "\"",
+                        "&quot;"
                 )
-
                 .replace(
-                    "'",
-                    "&#39;"
+                        "'",
+                        "&#39;"
                 );
     }
-    private void sendOrderEmail(
-        String customerEmail,
-        String customerName,
-        String foodName,
-        int quantity,
-        String fullName,
-        String phone,
-        String addressLine,
-        String city,
-        String state,
-        String pincode) throws Exception {
-
-    String senderEmail = System.getenv("EMAIL_USERNAME");
-    String senderPassword = System.getenv("EMAIL_PASSWORD");
-
-    Properties props = new Properties();
-
-    props.put("mail.smtp.auth", "true");
-    props.put("mail.smtp.starttls.enable", "true");
-    props.put("mail.smtp.host", "smtp.gmail.com");
-    props.put("mail.smtp.port", "587");
-
-    Session mailSession = Session.getInstance(
-            props,
-            new Authenticator() {
-                @Override
-                protected PasswordAuthentication getPasswordAuthentication() {
-                    return new PasswordAuthentication(
-                            senderEmail,
-                            senderPassword
-                    );
-                }
-            }
-    );
-
-    Message message = new MimeMessage(mailSession);
-
-    message.setFrom(new InternetAddress(senderEmail));
-
-    message.setRecipients(
-            Message.RecipientType.TO,
-            InternetAddress.parse(customerEmail)
-    );
-
-    message.setSubject("FoodieHub - Order Confirmed");
-
-    String emailBody =
-            "Hello " + customerName + ",\n\n"
-            + "Your FoodieHub order has been placed successfully!\n\n"
-            + "Order Details:\n"
-            + "Food: " + foodName + "\n"
-            + "Quantity: " + quantity + "\n\n"
-            + "Delivery Address:\n"
-            + fullName + "\n"
-            + phone + "\n"
-            + addressLine + "\n"
-            + city + ", " + state + "\n"
-            + pincode + "\n\n"
-            + "Thank you for ordering with FoodieHub!";
-
-    message.setText(emailBody);
-
-    Transport.send(message);
-}
 }
