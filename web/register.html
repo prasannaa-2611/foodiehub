@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>FoodieHub - Create Account</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #fff8f0;
+            min-height: 100vh;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            padding: 20px;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 500px;
+
+            background: white;
+
+            padding: 40px;
+
+            border-radius: 20px;
+
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            text-align: center;
+
+            font-size: 30px;
+            font-weight: bold;
+
+            margin-bottom: 10px;
+        }
+
+        .logo span {
+            color: #ff6b00;
+        }
+
+        h1 {
+            text-align: center;
+
+            font-size: 28px;
+
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            text-align: center;
+
+            color: #777;
+
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+
+            font-weight: bold;
+
+            margin-bottom: 8px;
+        }
+
+        input {
+            width: 100%;
+
+            padding: 14px;
+
+            border: 1px solid #ddd;
+
+            border-radius: 10px;
+
+            font-size: 16px;
+        }
+
+        input:focus {
+            outline: none;
+
+            border-color: #ff6b00;
+        }
+
+        .submit-btn {
+            width: 100%;
+
+            border: none;
+
+            padding: 15px;
+
+            background: #ff6b00;
+
+            color: white;
+
+            font-size: 17px;
+
+            font-weight: bold;
+
+            border-radius: 10px;
+
+            cursor: pointer;
+        }
+
+        .submit-btn:hover {
+            background: #e85d00;
+        }
+
+        .login {
+            text-align: center;
+
+            margin-top: 25px;
+
+            color: #777;
+        }
+
+        .login a {
+            color: #ff6b00;
+
+            text-decoration: none;
+
+            font-weight: bold;
+        }
+
+        .home {
+            display: block;
+
+            text-align: center;
+
+            margin-top: 15px;
+
+            color: #777;
+
+            text-decoration: none;
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="card">
+
+        <div class="logo">
+            Foodie<span>Hub</span>
+        </div>
+
+        <h1>
+            Create Account
+        </h1>
+
+        <p class="subtitle">
+            Join FoodieHub and order your favourite food 🍴
+        </p>
+
+
+        <form action="RegisterServlet" method="post">
+
+
+            <div class="form-group">
+
+                <label for="fullName">
+                    Full Name
+                </label>
+
+                <input
+                    type="text"
+                    id="fullName"
+                    name="fullName"
+                    placeholder="Enter your full name"
+                    required>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="email">
+                    Email
+                </label>
+
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="Enter your email"
+                    required>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="phone">
+                    Phone Number
+                </label>
+
+                <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    placeholder="Enter your phone number"
+                    required>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label for="password">
+                    Password
+                </label>
+
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Create a password"
+                    required>
+
+            </div>
+
+
+            <button
+                type="submit"
+                class="submit-btn">
+
+                Create Account
+
+            </button>
+
+        </form>
+
+
+        <p class="login">
+
+            Already have an account?
+
+            <a href="login.html">
+                Login
+            </a>
+
+        </p>
+
+
+        <a href="index.html" class="home">
+            ← Back to Home
+        </a>
+
+    </div>
+
+</body>
+
+</html>
