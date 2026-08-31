@@ -19,6 +19,3 @@ RUN javac \
     /tmp/servlet/*.java
 
 EXPOSE 8080
-COPY src/servlet/OrderServlet.java /tmp/OrderServlet.java
-
-RUN javac ... /tmp/OrderServlet.java
