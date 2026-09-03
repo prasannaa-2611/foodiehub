@@ -20,5 +20,7 @@ RUN javac \
     -cp "/usr/local/tomcat/lib/servlet-api.jar:/usr/local/tomcat/lib/mysql-connector-j-26.7.0.jar:/usr/local/tomcat/lib/jakarta.mail-api-2.1.3.jar:/usr/local/tomcat/lib/angus-mail-2.0.5.jar:/usr/local/tomcat/lib/jakarta.activation-api-2.1.3.jar" \
     -d /usr/local/tomcat/webapps/ROOT/WEB-INF/classes \
     /tmp/servlet/*.java
+RUN sed -i 's/port="8005"/port="-1"/' /usr/local/tomcat/conf/server.xml
+
 
 EXPOSE 8080
