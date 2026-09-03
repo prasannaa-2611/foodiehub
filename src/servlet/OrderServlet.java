@@ -36,14 +36,9 @@ public class OrderServlet extends HttpServlet {
         // GET ORDER DETAILS
         // =====================================================
 
-        String customerName =
-                request.getParameter("customerName");
-
-        String foodName =
-                request.getParameter("foodName");
-
-        String quantityText =
-                request.getParameter("quantity");
+        String customerName = request.getParameter("customerName");
+        String foodName = request.getParameter("foodName");
+        String quantityText = request.getParameter("quantity");
 
         // =====================================================
         // GET LOGGED-IN USER EMAIL
@@ -68,52 +63,40 @@ public class OrderServlet extends HttpServlet {
         // GET ADDRESS DETAILS
         // =====================================================
 
-        String fullName =
-                request.getParameter("fullName");
-
-        String phone =
-                request.getParameter("phone");
-
-        String addressLine =
-                request.getParameter("addressLine");
-
-        String city =
-                request.getParameter("city");
-
-        String state =
-                request.getParameter("state");
-
-        String pincode =
-                request.getParameter("pincode");
+        String fullName = request.getParameter("fullName");
+        String phone = request.getParameter("phone");
+        String addressLine = request.getParameter("addressLine");
+        String city = request.getParameter("city");
+        String state = request.getParameter("state");
+        String pincode = request.getParameter("pincode");
 
         // =====================================================
         // VALIDATION
         // =====================================================
 
         if (customerName == null ||
-                customerName.trim().isEmpty()
-                || foodName == null ||
-                foodName.trim().isEmpty()
-                || quantityText == null ||
-                quantityText.trim().isEmpty()
-                || fullName == null ||
-                fullName.trim().isEmpty()
-                || phone == null ||
-                phone.trim().isEmpty()
-                || addressLine == null ||
-                addressLine.trim().isEmpty()
-                || city == null ||
-                city.trim().isEmpty()
-                || state == null ||
-                state.trim().isEmpty()
-                || pincode == null ||
+                customerName.trim().isEmpty() ||
+                foodName == null ||
+                foodName.trim().isEmpty() ||
+                quantityText == null ||
+                quantityText.trim().isEmpty() ||
+                fullName == null ||
+                fullName.trim().isEmpty() ||
+                phone == null ||
+                phone.trim().isEmpty() ||
+                addressLine == null ||
+                addressLine.trim().isEmpty() ||
+                city == null ||
+                city.trim().isEmpty() ||
+                state == null ||
+                state.trim().isEmpty() ||
+                pincode == null ||
                 pincode.trim().isEmpty()) {
 
             showError(
                     out,
                     "Please fill in all customer, order, and address details."
             );
-
             return;
         }
 
@@ -125,8 +108,7 @@ public class OrderServlet extends HttpServlet {
 
         try {
 
-            quantity =
-                    Integer.parseInt(quantityText);
+            quantity = Integer.parseInt(quantityText);
 
             if (quantity < 1 || quantity > 20) {
 
@@ -134,7 +116,6 @@ public class OrderServlet extends HttpServlet {
                         out,
                         "Quantity must be between 1 and 20."
                 );
-
                 return;
             }
 
@@ -144,7 +125,6 @@ public class OrderServlet extends HttpServlet {
                     out,
                     "Please enter a valid quantity."
             );
-
             return;
         }
 
@@ -152,17 +132,12 @@ public class OrderServlet extends HttpServlet {
         // DATABASE ENVIRONMENT VARIABLES
         // =====================================================
 
-        String url =
-                System.getenv("DB_URL");
-
-        String username =
-                System.getenv("DB_USERNAME");
-
-        String password =
-                System.getenv("DB_PASSWORD");
+        String url = System.getenv("DB_URL");
+        String username = System.getenv("DB_USERNAME");
+        String password = System.getenv("DB_PASSWORD");
 
         // =====================================================
-        // CHECK ENVIRONMENT VARIABLES
+        // CHECK DATABASE ENVIRONMENT VARIABLES
         // =====================================================
 
         if (url == null || url.isBlank()) {
@@ -171,29 +146,24 @@ public class OrderServlet extends HttpServlet {
                     out,
                     "DB_URL is missing in Render Environment Variables."
             );
-
             return;
         }
 
-        if (username == null ||
-                username.isBlank()) {
+        if (username == null || username.isBlank()) {
 
             showError(
                     out,
                     "DB_USERNAME is missing in Render Environment Variables."
             );
-
             return;
         }
 
-        if (password == null ||
-                password.isBlank()) {
+        if (password == null || password.isBlank()) {
 
             showError(
                     out,
                     "DB_PASSWORD is missing in Render Environment Variables."
             );
-
             return;
         }
 
@@ -202,7 +172,6 @@ public class OrderServlet extends HttpServlet {
         // =====================================================
 
         if (url.startsWith("mysql://")) {
-
             url = "jdbc:" + url;
         }
 
@@ -238,9 +207,7 @@ public class OrderServlet extends HttpServlet {
         try {
 
             // Load MySQL driver
-            Class.forName(
-                    "com.mysql.cj.jdbc.Driver"
-            );
+            Class.forName("com.mysql.cj.jdbc.Driver");
 
             // Connect to database
             try (
@@ -278,6 +245,10 @@ public class OrderServlet extends HttpServlet {
                 );
 
                 orderPs.executeUpdate();
+
+                System.out.println(
+                        "ORDER STEP: Order saved successfully"
+                );
 
                 // =================================================
                 // SAVE ADDRESS
@@ -325,12 +296,35 @@ public class OrderServlet extends HttpServlet {
 
                 addressPs.executeUpdate();
 
-                // =================================================
-                // SEND CONFIRMATION EMAIL
-                // =================================================
-
-               
+                System.out.println(
+                        "ORDER STEP: Address saved successfully"
+                );
             }
+
+            // =====================================================
+            // SEND CONFIRMATION EMAIL
+            // =====================================================
+
+            System.out.println(
+                    "ORDER STEP: Starting email sending..."
+            );
+
+            sendOrderEmail(
+                    customerEmail,
+                    customerName,
+                    foodName,
+                    quantity,
+                    fullName,
+                    phone,
+                    addressLine,
+                    city,
+                    state,
+                    pincode
+            );
+
+            System.out.println(
+                    "ORDER STEP: Email method completed"
+            );
 
             // =====================================================
             // SUCCESS PAGE
@@ -338,6 +332,7 @@ public class OrderServlet extends HttpServlet {
 
             out.println("""
                 <!DOCTYPE html>
+
                 <html lang="en">
 
                 <head>
@@ -616,7 +611,6 @@ public class OrderServlet extends HttpServlet {
                         <p class="brand">
 
                             © 2026
-
                             <span>FoodieHub</span>
 
                         </p>
@@ -656,15 +650,19 @@ public class OrderServlet extends HttpServlet {
             String pincode)
             throws Exception {
 
+        System.out.println(
+                "MAIL STEP 1: entered sendOrderEmail"
+        );
+
+        // =====================================================
+        // GET EMAIL ENVIRONMENT VARIABLES
+        // =====================================================
+
         String senderEmail =
                 System.getenv("EMAIL_USERNAME");
 
         String senderPassword =
                 System.getenv("EMAIL_PASSWORD");
-
-        // =====================================================
-        // CHECK EMAIL ENVIRONMENT VARIABLES
-        // =====================================================
 
         if (senderEmail == null ||
                 senderEmail.isBlank()) {
@@ -682,12 +680,15 @@ public class OrderServlet extends HttpServlet {
             );
         }
 
+        System.out.println(
+                "MAIL STEP 2: Email environment variables found"
+        );
+
         // =====================================================
         // GMAIL SMTP SETTINGS
         // =====================================================
 
-        Properties props =
-                new Properties();
+        Properties props = new Properties();
 
         props.put(
                 "mail.smtp.auth",
@@ -707,6 +708,26 @@ public class OrderServlet extends HttpServlet {
         props.put(
                 "mail.smtp.port",
                 "587"
+        );
+
+        // Timeout settings so the request doesn't wait forever
+        props.put(
+                "mail.smtp.connectiontimeout",
+                "10000"
+        );
+
+        props.put(
+                "mail.smtp.timeout",
+                "10000"
+        );
+
+        props.put(
+                "mail.smtp.writetimeout",
+                "10000"
+        );
+
+        System.out.println(
+                "MAIL STEP 3: SMTP properties created"
         );
 
         // =====================================================
@@ -730,12 +751,20 @@ public class OrderServlet extends HttpServlet {
                         }
                 );
 
+        System.out.println(
+                "MAIL STEP 4: mail session created"
+        );
+
         // =====================================================
-        // CREATE EMAIL
+        // CREATE EMAIL MESSAGE
         // =====================================================
 
         Message message =
                 new MimeMessage(mailSession);
+
+        System.out.println(
+                "MAIL STEP 5: message created"
+        );
 
         message.setFrom(
                 new InternetAddress(senderEmail)
@@ -754,31 +783,50 @@ public class OrderServlet extends HttpServlet {
 
         String emailBody =
                 "Hello " + customerName + ",\n\n"
-                + "Your FoodieHub order has been placed successfully!\n\n"
+
+                + "Your FoodieHub order has been "
+                + "placed successfully!\n\n"
 
                 + "ORDER DETAILS\n"
                 + "--------------------------\n"
+
                 + "Food: " + foodName + "\n"
+
                 + "Quantity: " + quantity + "\n\n"
 
                 + "DELIVERY ADDRESS\n"
                 + "--------------------------\n"
+
                 + "Name: " + fullName + "\n"
+
                 + "Phone: " + phone + "\n"
+
                 + "Address: " + addressLine + "\n"
+
                 + "City: " + city + "\n"
+
                 + "State: " + state + "\n"
+
                 + "Pincode: " + pincode + "\n\n"
 
-                + "Thank you for ordering with FoodieHub!\n";
+                + "Thank you for ordering "
+                + "with FoodieHub!\n";
 
         message.setText(emailBody);
+
+        System.out.println(
+                "MAIL STEP 6: about to send email"
+        );
 
         // =====================================================
         // SEND EMAIL
         // =====================================================
 
         Transport.send(message);
+
+        System.out.println(
+                "MAIL STEP 7: EMAIL SENT SUCCESSFULLY"
+        );
     }
 
     // =========================================================
@@ -910,26 +958,11 @@ public class OrderServlet extends HttpServlet {
         }
 
         return text
-                .replace(
-                        "&",
-                        "&amp;"
-                )
-                .replace(
-                        "<",
-                        "&lt;"
-                )
-                .replace(
-                        ">",
-                        "&gt;"
-                )
-                .replace(
-                        "\"",
-                        "&quot;"
-                )
-                .replace(
-                        "'",
-                        "&#39;"
-                );
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 }
 
