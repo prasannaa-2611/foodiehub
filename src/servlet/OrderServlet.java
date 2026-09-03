@@ -309,18 +309,6 @@ public class OrderServlet extends HttpServlet {
                     "ORDER STEP: Starting email sending..."
             );
 
-            sendOrderEmail(
-                    customerEmail,
-                    customerName,
-                    foodName,
-                    quantity,
-                    fullName,
-                    phone,
-                    addressLine,
-                    city,
-                    state,
-                    pincode
-            );
 
             System.out.println(
                     "ORDER STEP: Email method completed"

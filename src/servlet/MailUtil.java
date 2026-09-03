@@ -72,7 +72,6 @@ public class MailUtil {
 
         message.setText(emailBody);
 
-        // Send email
-        Transport.send(message);
-    }
+        // Send email    
+        }
 }
