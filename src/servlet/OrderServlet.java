@@ -324,7 +324,18 @@ public class OrderServlet extends HttpServlet {
                 );
 
                 addressPs.executeUpdate();
-
+sendOrderEmail(
+    customerEmail,
+    customerName,
+    foodName,
+    quantity,
+    fullName,
+    phone,
+    addressLine,
+    city,
+    state,
+    pincode
+);
                 // =================================================
                 // SEND CONFIRMATION EMAIL
                 // =================================================
