@@ -63,7 +63,7 @@
 
 <div class="container">
 
-    <h1>📦 My Order History</h1>
+    <h1> My Order History</h1>
 
     <%
         if (orders == null || orders.isEmpty()) {
@@ -116,11 +116,11 @@
 
     <div class="buttons">
         <button onclick="location.href='profile.jsp'">
-            👤 Back to Profile
+             Back to Profile
         </button>
 
         <button onclick="location.href='index.html'">
-            🏠 Home
+             Home
         </button>
     </div>
 

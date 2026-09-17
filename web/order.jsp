@@ -395,7 +395,7 @@ if (selectedFood == null) {
                 <!-- CUSTOMER -->
 
                 <h2 class="section-title">
-                    👤 Customer Information
+                     Customer Information
                 </h2>
 
                 <div class="form-group">
@@ -417,7 +417,7 @@ if (selectedFood == null) {
                 <!-- FOOD -->
 
                 <h2 class="section-title">
-                    🍴 Order Details
+                 Order Details
                 </h2>
 
 
