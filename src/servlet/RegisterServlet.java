@@ -28,18 +28,10 @@ public class RegisterServlet extends HttpServlet {
         // GET FORM VALUES
         // =========================================
 
-        String fullName =
-                request.getParameter("fullName");
-
-        String email =
-                request.getParameter("email");
-
-        String phone =
-                request.getParameter("phone");
-
-        String password =
-                request.getParameter("password");
-
+        String fullName = request.getParameter("fullName");
+        String email = request.getParameter("email");
+        String phone = request.getParameter("phone");
+        String password = request.getParameter("password");
 
         // =========================================
         // VALIDATION
@@ -58,15 +50,13 @@ public class RegisterServlet extends HttpServlet {
             return;
         }
 
-
         // =========================================
         // DATABASE ENVIRONMENT VARIABLES
         // =========================================
 
         String url = System.getenv("DB_URL");
-String username = System.getenv("DB_USERNAME");
-String dbPassword = System.getenv("DB_PASSWORD");
-
+        String username = System.getenv("DB_USERNAME");
+        String dbPassword = System.getenv("DB_PASSWORD");
 
         if (url == null || url.isBlank()) {
 
@@ -78,7 +68,6 @@ String dbPassword = System.getenv("DB_PASSWORD");
             return;
         }
 
-
         if (username == null || username.isBlank()) {
 
             showMessage(
@@ -88,7 +77,6 @@ String dbPassword = System.getenv("DB_PASSWORD");
 
             return;
         }
-
 
         if (dbPassword == null || dbPassword.isBlank()) {
 
@@ -100,16 +88,13 @@ String dbPassword = System.getenv("DB_PASSWORD");
             return;
         }
 
-
         // =========================================
         // JDBC URL
         // =========================================
 
         if (url.startsWith("mysql://")) {
-
             url = "jdbc:" + url;
         }
-
 
         // =========================================
         // HASH PASSWORD
@@ -119,10 +104,11 @@ String dbPassword = System.getenv("DB_PASSWORD");
 
         try {
 
-            passwordHash =
-                    hashPassword(password);
+            passwordHash = hashPassword(password);
 
         } catch (Exception e) {
+
+            e.printStackTrace();
 
             showMessage(
                     out,
@@ -131,7 +117,6 @@ String dbPassword = System.getenv("DB_PASSWORD");
 
             return;
         }
-
 
         // =========================================
         // INSERT USER
@@ -143,14 +128,10 @@ String dbPassword = System.getenv("DB_PASSWORD");
             VALUES (?, ?, ?, ?)
             """;
 
-
         try {
 
             // Load MySQL driver
-            Class.forName(
-                    "com.mysql.cj.jdbc.Driver"
-            );
-
+            Class.forName("com.mysql.cj.jdbc.Driver");
 
             // Connect to database
             try (
@@ -185,10 +166,8 @@ String dbPassword = System.getenv("DB_PASSWORD");
                         passwordHash
                 );
 
-
                 ps.executeUpdate();
             }
-
 
             // =====================================
             // SUCCESS
@@ -196,7 +175,6 @@ String dbPassword = System.getenv("DB_PASSWORD");
 
             out.println("""
                 <!DOCTYPE html>
-
                 <html>
 
                 <head>
@@ -210,9 +188,7 @@ String dbPassword = System.getenv("DB_PASSWORD");
                         body {
                             font-family: Arial;
                             background: #fff8f0;
-
                             min-height: 100vh;
-
                             display: flex;
                             align-items: center;
                             justify-content: center;
@@ -220,13 +196,9 @@ String dbPassword = System.getenv("DB_PASSWORD");
 
                         .card {
                             background: white;
-
                             padding: 40px;
-
                             border-radius: 20px;
-
                             text-align: center;
-
                             box-shadow:
                                 0 10px 30px
                                 rgba(0,0,0,0.1);
@@ -239,17 +211,11 @@ String dbPassword = System.getenv("DB_PASSWORD");
 
                         a {
                             display: inline-block;
-
                             margin-top: 20px;
-
                             padding: 12px 25px;
-
                             background: #ff6b00;
-
                             color: white;
-
                             text-decoration: none;
-
                             border-radius: 10px;
                         }
 
@@ -280,13 +246,12 @@ String dbPassword = System.getenv("DB_PASSWORD");
                 </html>
                 """);
 
-
         } catch (Exception e) {
 
-            // Print the complete error in Render logs
+            // Print complete error in Render logs
             e.printStackTrace();
 
-            // Show the REAL error in browser
+            // Show error in browser
             showMessage(
                     out,
                     "Registration failed: " + e.getMessage()
@@ -294,14 +259,12 @@ String dbPassword = System.getenv("DB_PASSWORD");
         }
     }
 
-
     // =============================================
     // PASSWORD HASHING
     // =============================================
 
     private String hashPassword(
-            String password)
-            throws Exception {
+            String password) throws Exception {
 
         MessageDigest digest =
                 MessageDigest.getInstance("SHA-256");
@@ -322,7 +285,6 @@ String dbPassword = System.getenv("DB_PASSWORD");
                     );
 
             if (h.length() == 1) {
-
                 hex.append('0');
             }
 
@@ -331,7 +293,6 @@ String dbPassword = System.getenv("DB_PASSWORD");
 
         return hex.toString();
     }
-
 
     // =============================================
     // ERROR PAGE
@@ -343,7 +304,6 @@ String dbPassword = System.getenv("DB_PASSWORD");
 
         out.println("""
             <!DOCTYPE html>
-
             <html>
 
             <head>
@@ -357,9 +317,7 @@ String dbPassword = System.getenv("DB_PASSWORD");
                     body {
                         font-family: Arial;
                         background: #fff8f0;
-
                         min-height: 100vh;
-
                         display: flex;
                         align-items: center;
                         justify-content: center;
@@ -367,15 +325,10 @@ String dbPassword = System.getenv("DB_PASSWORD");
 
                     .card {
                         background: white;
-
                         padding: 40px;
-
                         border-radius: 20px;
-
                         text-align: center;
-
                         max-width: 500px;
-
                         box-shadow:
                             0 10px 30px
                             rgba(0,0,0,0.1);
@@ -387,23 +340,16 @@ String dbPassword = System.getenv("DB_PASSWORD");
 
                     .message {
                         color: #555;
-
                         margin-top: 15px;
                     }
 
                     a {
                         display: inline-block;
-
                         margin-top: 20px;
-
                         padding: 12px 25px;
-
                         background: #ff6b00;
-
                         color: white;
-
                         text-decoration: none;
-
                         border-radius: 10px;
                     }
 
@@ -422,9 +368,7 @@ String dbPassword = System.getenv("DB_PASSWORD");
                     <p class="message">
             """);
 
-        out.println(
-                escapeHtml(message)
-        );
+        out.println(escapeHtml(message));
 
         out.println("""
                     </p>
@@ -441,16 +385,13 @@ String dbPassword = System.getenv("DB_PASSWORD");
             """);
     }
 
-
     // =============================================
     // HTML ESCAPE
     // =============================================
 
-    private String escapeHtml(
-            String text) {
+    private String escapeHtml(String text) {
 
         if (text == null) {
-
             return "";
         }
 
