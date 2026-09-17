@@ -103,7 +103,7 @@
 
             <p>
                 <a href="TrackOrderServlet?orderId=<%= order.get("id") %>">
-                    🚚 Track This Order
+                 Track This Order
                 </a>
             </p>
 
