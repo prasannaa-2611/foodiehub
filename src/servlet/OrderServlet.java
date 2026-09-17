@@ -37,7 +37,6 @@ public class OrderServlet extends HttpServlet {
         String foodName = request.getParameter("foodName");
         String quantityText = request.getParameter("quantity");
 
-
         // =========================================
         // GET LOGGED-IN USER FROM SESSION
         // =========================================
@@ -47,8 +46,10 @@ public class OrderServlet extends HttpServlet {
         if (session == null ||
                 session.getAttribute("email") == null) {
 
-            showError(out,
-                    "User email not found. Please login again.");
+            showError(
+                    out,
+                    "User email not found. Please login again."
+            );
             return;
         }
 
@@ -60,11 +61,12 @@ public class OrderServlet extends HttpServlet {
 
         if (userId == null) {
 
-            showError(out,
-                    "User ID not found. Please login again.");
+            showError(
+                    out,
+                    "User ID not found. Please login again."
+            );
             return;
         }
-
 
         // =========================================
         // GET ADDRESS DETAILS
@@ -76,7 +78,6 @@ public class OrderServlet extends HttpServlet {
         String city = request.getParameter("city");
         String state = request.getParameter("state");
         String pincode = request.getParameter("pincode");
-
 
         // =========================================
         // VALIDATION
@@ -92,11 +93,12 @@ public class OrderServlet extends HttpServlet {
                 isEmpty(state) ||
                 isEmpty(pincode)) {
 
-            showError(out,
-                    "Please fill all required fields.");
+            showError(
+                    out,
+                    "Please fill all required fields."
+            );
             return;
         }
-
 
         // =========================================
         // QUANTITY
@@ -110,18 +112,21 @@ public class OrderServlet extends HttpServlet {
 
             if (quantity < 1 || quantity > 20) {
 
-                showError(out,
-                        "Quantity must be between 1 and 20.");
+                showError(
+                        out,
+                        "Quantity must be between 1 and 20."
+                );
                 return;
             }
 
         } catch (NumberFormatException e) {
 
-            showError(out,
-                    "Invalid quantity.");
+            showError(
+                    out,
+                    "Invalid quantity."
+            );
             return;
         }
-
 
         // =========================================
         // DATABASE ENVIRONMENT VARIABLES
@@ -135,11 +140,12 @@ public class OrderServlet extends HttpServlet {
                 isEmpty(username) ||
                 isEmpty(password)) {
 
-            showError(out,
-                    "Database environment variables are missing.");
+            showError(
+                    out,
+                    "Database environment variables are missing."
+            );
             return;
         }
-
 
         // =========================================
         // MYSQL URL
@@ -148,7 +154,6 @@ public class OrderServlet extends HttpServlet {
         if (url.startsWith("mysql://")) {
             url = "jdbc:" + url;
         }
-
 
         // =========================================
         // SQL
@@ -166,7 +171,6 @@ public class OrderServlet extends HttpServlet {
                 VALUES (?, ?, ?, ?, ?)
                 """;
 
-
         String addressSql = """
                 INSERT INTO addresses
                 (
@@ -182,7 +186,6 @@ public class OrderServlet extends HttpServlet {
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """;
 
-
         // =========================================
         // DATABASE CONNECTION
         // =========================================
@@ -192,23 +195,22 @@ public class OrderServlet extends HttpServlet {
             Class.forName("com.mysql.cj.jdbc.Driver");
 
             try (
-                Connection con =
-                        DriverManager.getConnection(
-                                url,
-                                username,
-                                password
-                        );
+                    Connection con =
+                            DriverManager.getConnection(
+                                    url,
+                                    username,
+                                    password
+                            );
 
-                PreparedStatement orderPs =
-                        con.prepareStatement(
-                                orderSql,
-                                java.sql.Statement.RETURN_GENERATED_KEYS
-                        );
+                    PreparedStatement orderPs =
+                            con.prepareStatement(
+                                    orderSql,
+                                    java.sql.Statement.RETURN_GENERATED_KEYS
+                            );
 
-                PreparedStatement addressPs =
-                        con.prepareStatement(addressSql)
+                    PreparedStatement addressPs =
+                            con.prepareStatement(addressSql)
             ) {
-
 
                 // =========================================
                 // INSERT ORDER
@@ -238,7 +240,6 @@ public class OrderServlet extends HttpServlet {
 
                 orderPs.executeUpdate();
 
-
                 // =========================================
                 // GET GENERATED ORDER ID
                 // =========================================
@@ -246,8 +247,8 @@ public class OrderServlet extends HttpServlet {
                 int orderId = 0;
 
                 try (
-                    ResultSet generatedKeys =
-                            orderPs.getGeneratedKeys()
+                        ResultSet generatedKeys =
+                                orderPs.getGeneratedKeys()
                 ) {
 
                     if (generatedKeys.next()) {
@@ -256,7 +257,6 @@ public class OrderServlet extends HttpServlet {
                                 generatedKeys.getInt(1);
                     }
                 }
-
 
                 // =========================================
                 // INSERT ADDRESS
@@ -304,7 +304,6 @@ public class OrderServlet extends HttpServlet {
 
                 addressPs.executeUpdate();
 
-
                 // =========================================
                 // SEND ORDER EMAIL
                 // =========================================
@@ -329,7 +328,6 @@ public class OrderServlet extends HttpServlet {
                     emailException.printStackTrace();
                 }
 
-
                 // =========================================
                 // SUCCESS PAGE
                 // =========================================
@@ -337,141 +335,164 @@ public class OrderServlet extends HttpServlet {
                 String trackUrl =
                         "TrackOrderServlet?orderId=" + orderId;
 
-                out.println("""
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                            <title>Order Confirmed</title>
+                out.println("<!DOCTYPE html>");
+                out.println("<html>");
+                out.println("<head>");
+                out.println("<title>Order Confirmed</title>");
 
-                            <style>
+                out.println("<style>");
 
-                                body {
-                                    font-family: Arial, sans-serif;
-                                    background: #fff8f1;
-                                    text-align: center;
-                                    padding: 40px;
-                                }
+                out.println("body {");
+                out.println("font-family: Arial, sans-serif;");
+                out.println("background: #fff8f1;");
+                out.println("text-align: center;");
+                out.println("padding: 40px;");
+                out.println("}");
 
-                                .box {
-                                    background: white;
-                                    max-width: 600px;
-                                    margin: auto;
-                                    padding: 30px;
-                                    border-radius: 15px;
-                                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-                                }
+                out.println(".box {");
+                out.println("background: white;");
+                out.println("max-width: 600px;");
+                out.println("margin: auto;");
+                out.println("padding: 30px;");
+                out.println("border-radius: 15px;");
+                out.println("box-shadow: 0 4px 15px rgba(0,0,0,0.1);");
+                out.println("}");
 
-                                h1 {
-                                    color: #ff6b00;
-                                }
+                out.println("h1 {");
+                out.println("color: #ff6b00;");
+                out.println("}");
 
-                                .details {
-                                    text-align: left;
-                                    margin-top: 20px;
-                                    line-height: 1.8;
-                                }
+                out.println(".details {");
+                out.println("text-align: left;");
+                out.println("margin-top: 20px;");
+                out.println("line-height: 1.8;");
+                out.println("}");
 
-                                .home-btn {
-                                    display: inline-block;
-                                    margin-top: 25px;
-                                    padding: 12px 20px;
-                                    background: #ff6b00;
-                                    color: white;
-                                    text-decoration: none;
-                                    border-radius: 8px;
-                                    margin-right: 10px;
-                                }
+                out.println(".home-btn, .track-btn {");
+                out.println("display: inline-block;");
+                out.println("margin-top: 25px;");
+                out.println("padding: 12px 20px;");
+                out.println("color: white;");
+                out.println("text-decoration: none;");
+                out.println("border-radius: 8px;");
+                out.println("}");
 
-                                .track-btn {
-                                    display: inline-block;
-                                    margin-top: 25px;
-                                    padding: 12px 20px;
-                                    background: #28a745;
-                                    color: white;
-                                    text-decoration: none;
-                                    border-radius: 8px;
-                                }
+                out.println(".home-btn {");
+                out.println("background: #ff6b00;");
+                out.println("margin-right: 10px;");
+                out.println("}");
 
-                            </style>
-                        </head>
+                out.println(".track-btn {");
+                out.println("background: #28a745;");
+                out.println("}");
 
-                        <body>
+                out.println("</style>");
+                out.println("</head>");
 
-                            <div class="box">
+                out.println("<body>");
 
-                                <h1>🎉 Order Confirmed!</h1>
+                out.println("<div class=\"box\">");
 
-                                <p>
-                                    Thank you for ordering from FoodieHub.
-                                </p>
+                out.println("<h1>🎉 Order Confirmed!</h1>");
 
-                                <div class="details">
+                out.println(
+                        "<p>Thank you for ordering from FoodieHub.</p>"
+                );
 
-                                    <p>
-                                        <strong>Order ID:</strong>
-                                        """ + orderId + """
-                                    </p>
+                out.println("<div class=\"details\">");
 
-                                    <p>
-                                        <strong>Customer:</strong>
-                                        """ + escapeHtml(customerName) + """
-                                    </p>
+                out.println(
+                        "<p><strong>Order ID:</strong> "
+                                + orderId
+                                + "</p>"
+                );
 
-                                    <p>
-                                        <strong>Food:</strong>
-                                        """ + escapeHtml(foodName) + """
-                                    </p>
+                out.println(
+                        "<p><strong>Customer:</strong> "
+                                + escapeHtml(customerName)
+                                + "</p>"
+                );
 
-                                    <p>
-                                        <strong>Quantity:</strong>
-                                        """ + quantity + """
-                                    </p>
+                out.println(
+                        "<p><strong>Food:</strong> "
+                                + escapeHtml(foodName)
+                                + "</p>"
+                );
 
-                                    <p>
-                                        <strong>Status:</strong>
-                                        Order Placed
-                                    </p>
+                out.println(
+                        "<p><strong>Quantity:</strong> "
+                                + quantity
+                                + "</p>"
+                );
 
-                                    <h3>Delivery Address</h3>
+                out.println(
+                        "<p><strong>Status:</strong> "
+                                + "Order Placed"
+                                + "</p>"
+                );
 
-                                    <p>
-                                        """ + escapeHtml(fullName) + """
-                                    </p>
+                out.println("<h3>Delivery Address</h3>");
 
-                                    <p>
-                                        """ + escapeHtml(phone) + """
-                                    </p>
+                out.println(
+                        "<p>"
+                                + escapeHtml(fullName)
+                                + "</p>"
+                );
 
-                                    <p>
-                                        """ + escapeHtml(addressLine) + """
-                                    </p>
+                out.println(
+                        "<p>"
+                                + escapeHtml(phone)
+                                + "</p>"
+                );
 
-                                    <p>
-                                        """ + escapeHtml(city) + ", "
-                                            + escapeHtml(state) + """
-                                    </p>
+                out.println(
+                        "<p>"
+                                + escapeHtml(addressLine)
+                                + "</p>"
+                );
 
-                                    <p>
-                                        """ + escapeHtml(pincode) + """
-                                    </p>
+                out.println(
+                        "<p>"
+                                + escapeHtml(city)
+                                + ", "
+                                + escapeHtml(state)
+                                + "</p>"
+                );
 
-                                </div>
+                out.println(
+                        "<p>"
+                                + escapeHtml(pincode)
+                                + "</p>"
+                );
 
-                                <a href=\"""" + trackUrl + """\"
-                                   class="track-btn">
-                                    📦 Track Order
-                                </a>
+                out.println("</div>");
 
-                                <a href="index.html"
-                                   class="home-btn">
-                                    ← Back to Home
-                                </a>
+                // =========================================
+                // TRACK ORDER BUTTON
+                // =========================================
 
-                            </div>
+                out.println(
+                        "<a href=\""
+                                + trackUrl
+                                + "\" class=\"track-btn\">"
+                                + "📦 Track Order"
+                                + "</a>"
+                );
 
-                        </body>
-                        </html>
-                        """);
+                // =========================================
+                // HOME BUTTON
+                // =========================================
+
+                out.println(
+                        "<a href=\"index.html\" class=\"home-btn\">"
+                                + "← Back to Home"
+                                + "</a>"
+                );
+
+                out.println("</div>");
+
+                out.println("</body>");
+                out.println("</html>");
             }
 
         } catch (Exception e) {
@@ -486,7 +507,6 @@ public class OrderServlet extends HttpServlet {
             );
         }
     }
-
 
     // =========================================
     // SEND ORDER EMAIL
@@ -505,7 +525,6 @@ public class OrderServlet extends HttpServlet {
             String pincode)
             throws Exception {
 
-
         String serviceId =
                 System.getenv("EMAILJS_SERVICE_ID");
 
@@ -515,7 +534,6 @@ public class OrderServlet extends HttpServlet {
         String publicKey =
                 System.getenv("EMAILJS_PUBLIC_KEY");
 
-
         if (isEmpty(serviceId) ||
                 isEmpty(templateId) ||
                 isEmpty(publicKey)) {
@@ -524,7 +542,6 @@ public class OrderServlet extends HttpServlet {
                     "EmailJS environment variables are missing."
             );
         }
-
 
         String json = """
                 {
@@ -560,16 +577,13 @@ public class OrderServlet extends HttpServlet {
                 jsonEscape(pincode)
         );
 
-
         URL url =
                 new URL(
                         "https://api.emailjs.com/api/v1.0/email/send"
                 );
 
-
         HttpURLConnection connection =
                 (HttpURLConnection) url.openConnection();
-
 
         connection.setRequestMethod("POST");
 
@@ -580,17 +594,13 @@ public class OrderServlet extends HttpServlet {
 
         connection.setDoOutput(true);
 
-
         byte[] data =
                 json.getBytes(StandardCharsets.UTF_8);
 
-
         connection.getOutputStream().write(data);
-
 
         int responseCode =
                 connection.getResponseCode();
-
 
         if (responseCode < 200 ||
                 responseCode >= 300) {
@@ -601,12 +611,10 @@ public class OrderServlet extends HttpServlet {
             );
         }
 
-
         System.out.println(
                 "Order confirmation email sent successfully."
         );
     }
-
 
     // =========================================
     // CHECK EMPTY
@@ -617,7 +625,6 @@ public class OrderServlet extends HttpServlet {
         return value == null ||
                 value.trim().isEmpty();
     }
-
 
     // =========================================
     // JSON ESCAPE
@@ -637,7 +644,6 @@ public class OrderServlet extends HttpServlet {
                 .replace("\t", "\\t");
     }
 
-
     // =========================================
     // HTML ESCAPE
     // =========================================
@@ -656,7 +662,6 @@ public class OrderServlet extends HttpServlet {
                 .replace("'", "&#39;");
     }
 
-
     // =========================================
     // ERROR PAGE
     // =========================================
@@ -665,66 +670,67 @@ public class OrderServlet extends HttpServlet {
             PrintWriter out,
             String message) {
 
-        out.println("""
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title>Order Error</title>
+        out.println("<!DOCTYPE html>");
+        out.println("<html>");
+        out.println("<head>");
+        out.println("<title>Order Error</title>");
 
-                    <style>
+        out.println("<style>");
 
-                        body {
-                            font-family: Arial, sans-serif;
-                            background: #fff8f1;
-                            text-align: center;
-                            padding: 50px;
-                        }
+        out.println("body {");
+        out.println("font-family: Arial, sans-serif;");
+        out.println("background: #fff8f1;");
+        out.println("text-align: center;");
+        out.println("padding: 50px;");
+        out.println("}");
 
-                        .box {
-                            background: white;
-                            max-width: 500px;
-                            margin: auto;
-                            padding: 30px;
-                            border-radius: 15px;
-                            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-                        }
+        out.println(".box {");
+        out.println("background: white;");
+        out.println("max-width: 500px;");
+        out.println("margin: auto;");
+        out.println("padding: 30px;");
+        out.println("border-radius: 15px;");
+        out.println("box-shadow: 0 4px 15px rgba(0,0,0,0.1);");
+        out.println("}");
 
-                        h1 {
-                            color: #dc3545;
-                        }
+        out.println("h1 {");
+        out.println("color: #dc3545;");
+        out.println("}");
 
-                        .btn {
-                            display: inline-block;
-                            margin-top: 20px;
-                            padding: 12px 20px;
-                            background: #ff6b00;
-                            color: white;
-                            text-decoration: none;
-                            border-radius: 8px;
-                        }
+        out.println(".btn {");
+        out.println("display: inline-block;");
+        out.println("margin-top: 20px;");
+        out.println("padding: 12px 20px;");
+        out.println("background: #ff6b00;");
+        out.println("color: white;");
+        out.println("text-decoration: none;");
+        out.println("border-radius: 8px;");
+        out.println("}");
 
-                    </style>
-                </head>
+        out.println("</style>");
+        out.println("</head>");
 
-                <body>
+        out.println("<body>");
 
-                    <div class="box">
+        out.println("<div class=\"box\">");
 
-                        <h1>❌ Order Failed</h1>
+        out.println("<h1>❌ Order Failed</h1>");
 
-                        <p>
-                """ + escapeHtml(message) + """
-                        </p>
+        out.println(
+                "<p>"
+                        + escapeHtml(message)
+                        + "</p>"
+        );
 
-                        <a href="index.html"
-                           class="btn">
-                            ← Back to Home
-                        </a>
+        out.println(
+                "<a href=\"index.html\" class=\"btn\">"
+                        + "← Back to Home"
+                        + "</a>"
+        );
 
-                    </div>
+        out.println("</div>");
 
-                </body>
-                </html>
-                """);
+        out.println("</body>");
+        out.println("</html>");
     }
 }
