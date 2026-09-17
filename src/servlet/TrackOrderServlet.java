@@ -112,17 +112,18 @@ public class TrackOrderServlet extends HttpServlet {
         // =========================================
 
         String sql = """
-                SELECT
-                    id,
-                    customer_name,
-                    food_name,
-                    quantity,
-                    status
-                FROM orders
-                WHERE id = ?
-                AND user_id = ?
-                """;
-
+        SELECT
+            id,
+            customer_name,
+            food_name,
+            quantity,
+            status,
+            delivery_latitude,
+            delivery_longitude
+        FROM orders
+        WHERE id = ?
+        AND user_id = ?
+        """;
 
         try {
 
@@ -178,7 +179,11 @@ public class TrackOrderServlet extends HttpServlet {
                     String status =
                             rs.getString("status");
 
+Double deliveryLatitude =
+        (Double) rs.getObject("delivery_latitude");
 
+Double deliveryLongitude =
+        (Double) rs.getObject("delivery_longitude");
                     // =========================================
                     // TRACKING PAGE
                     // =========================================

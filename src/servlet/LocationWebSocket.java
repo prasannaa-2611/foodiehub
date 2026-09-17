@@ -4,6 +4,7 @@ import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -13,7 +14,7 @@ public class LocationWebSocket {
 
     @OnOpen
     public void onOpen(Session session) {
-        System.out.println("Delivery device connected");
+        System.out.println("WebSocket connected");
     }
 
     @OnMessage
@@ -22,8 +23,9 @@ public class LocationWebSocket {
         System.out.println("Location received: " + message);
 
         try {
-            // Expected message:
-            // {"orderId":"195","latitude":16.123,"longitude":81.456}
+
+            // Expected:
+            // {"orderId":"201","latitude":16.123,"longitude":81.456}
 
             String orderIdText = getValue(message, "orderId");
             String latitudeText = getValue(message, "latitude");
@@ -49,9 +51,12 @@ public class LocationWebSocket {
                 WHERE id = ?
                 """;
 
-            try (Connection con = DriverManager.getConnection(
-                    url, username, password);
-                 PreparedStatement ps = con.prepareStatement(sql)) {
+            try (
+                Connection con = DriverManager.getConnection(
+                    url, username, password
+                );
+                PreparedStatement ps = con.prepareStatement(sql)
+            ) {
 
                 ps.setDouble(1, latitude);
                 ps.setDouble(2, longitude);
@@ -60,10 +65,23 @@ public class LocationWebSocket {
                 int rows = ps.executeUpdate();
 
                 if (rows > 0) {
+
                     System.out.println(
                         "Location saved for order " + orderId
                     );
+
+                    // Send location to all connected customers
+                    for (Session connectedSession : session.getOpenSessions()) {
+
+                        if (connectedSession.isOpen()) {
+
+                            connectedSession.getBasicRemote().sendText(message);
+
+                        }
+                    }
+
                 } else {
+
                     System.out.println(
                         "Order not found: " + orderId
                     );
@@ -78,6 +96,7 @@ public class LocationWebSocket {
     private String getValue(String json, String key) {
 
         String search = "\"" + key + "\":";
+
         int start = json.indexOf(search);
 
         if (start == -1) {
@@ -88,18 +107,24 @@ public class LocationWebSocket {
 
         start += search.length();
 
-        while (start < json.length()
-                && (json.charAt(start) == ' '
-                || json.charAt(start) == '"')) {
+        while (
+            start < json.length()
+            && (
+                json.charAt(start) == ' '
+                || json.charAt(start) == '"'
+            )
+        ) {
             start++;
         }
 
         int end = start;
 
-        while (end < json.length()
-                && json.charAt(end) != ','
-                && json.charAt(end) != '}'
-                && json.charAt(end) != '"') {
+        while (
+            end < json.length()
+            && json.charAt(end) != ','
+            && json.charAt(end) != '}'
+            && json.charAt(end) != '"'
+        ) {
             end++;
         }
 
@@ -108,6 +133,6 @@ public class LocationWebSocket {
 
     @OnClose
     public void onClose(Session session) {
-        System.out.println("Delivery device disconnected");
+        System.out.println("WebSocket disconnected");
     }
 }
