@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>FoodieHub - Delivery Tracking</title>
@@ -9,84 +10,124 @@
 
 <h2>🚚 FoodieHub Delivery</h2>
 
-<p id="status">Connecting...</p>
+<label>Enter Order ID:</label>
+<input type="number" id="orderId" placeholder="Example: 205">
+
+<button onclick="startDelivery()">Start Delivery</button>
+
+<p id="status">Enter an order ID to start.</p>
 
 <script>
-    const status = document.getElementById("status");
 
-    // Connect to the Java WebSocket
-    const protocol = location.protocol === "https:" ? "wss://" : "ws://";
+const status = document.getElementById("status");
 
-    const socket = new WebSocket(
+let socket = null;
+let orderId = null;
+
+function startDelivery() {
+
+    orderId = document.getElementById("orderId").value;
+
+    if (!orderId) {
+        status.innerText = "Please enter an Order ID ❌";
+        return;
+    }
+
+    status.innerText = "Connecting...";
+
+    const protocol =
+        location.protocol === "https:" ? "wss://" : "ws://";
+
+    socket = new WebSocket(
         protocol + location.host + "/location"
     );
 
     socket.onopen = function () {
-        status.innerText = "WebSocket connected ✅";
+
+        status.innerText =
+            "WebSocket connected ✅\n" +
+            "Tracking Order #" + orderId;
+
         startLocationSharing();
     };
 
     socket.onclose = function () {
-        status.innerText = "WebSocket disconnected ❌";
+
+        status.innerText =
+            "WebSocket disconnected ❌";
     };
 
     socket.onerror = function () {
-        status.innerText = "WebSocket error ❌";
+
+        status.innerText =
+            "WebSocket error ❌";
     };
+}
 
 
-    function startLocationSharing() {
+function startLocationSharing() {
 
-        if (!navigator.geolocation) {
-            status.innerText = "GPS is not supported ❌";
-            return;
-        }
+    if (!navigator.geolocation) {
 
-        navigator.geolocation.watchPosition(
+        status.innerText =
+            "GPS is not supported ❌";
 
-            function (position) {
+        return;
+    }
 
-                const latitude = position.coords.latitude;
-                const longitude = position.coords.longitude;
+    navigator.geolocation.watchPosition(
 
-            const params = new URLSearchParams(window.location.search);
-const orderId = params.get("orderId");
+        function (position) {
 
-const locationData = {
-    orderId: orderId,
-    latitude: latitude,
-    longitude: longitude
-};
+            const latitude =
+                position.coords.latitude;
 
-                // Send GPS location to Java WebSocket
-                if (socket.readyState === WebSocket.OPEN) {
+            const longitude =
+                position.coords.longitude;
 
-                    socket.send(JSON.stringify(locationData));
 
-                    status.innerText =
-                        "Location sharing active 📍\n" +
-                        "Latitude: " + latitude + "\n" +
-                        "Longitude: " + longitude;
-                }
+            const locationData = {
 
-            },
+                orderId: orderId,
+                latitude: latitude,
+                longitude: longitude
 
-            function (error) {
+            };
+
+
+            if (socket.readyState === WebSocket.OPEN) {
+
+                socket.send(
+                    JSON.stringify(locationData)
+                );
 
                 status.innerText =
-                    "Please allow location permission ❌";
-
-                console.log(error);
-
-            },
-
-            {
-                enableHighAccuracy: true,
-                maximumAge: 5000,
-                timeout: 10000
+                    "Location sharing active 📍\n\n" +
+                    "Order: #" + orderId + "\n" +
+                    "Latitude: " + latitude + "\n" +
+                    "Longitude: " + longitude;
             }
-        );
-    }
+
+        },
+
+        function (error) {
+
+            status.innerText =
+                "Please allow location permission ❌";
+
+            console.log(error);
+        },
+
+        {
+
+            enableHighAccuracy: true,
+            maximumAge: 5000,
+            timeout: 10000
+
+        }
+    );
+}
+
 </script>
 
 </body>
