@@ -1,4 +1,4 @@
-import java.import java.io.IOException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -27,17 +27,15 @@ public class LoginServlet extends HttpServlet {
             throws ServletException, IOException {
 
         response.setContentType("text/html;charset=UTF-8");
+
         PrintWriter out = response.getWriter();
 
         // =========================================
         // GET FORM VALUES
         // =========================================
 
-        String email =
-                request.getParameter("email");
-
-        String password =
-                request.getParameter("password");
+        String email = request.getParameter("email");
+        String password = request.getParameter("password");
 
         // =========================================
         // VALIDATION
@@ -55,17 +53,12 @@ public class LoginServlet extends HttpServlet {
         }
 
         // =========================================
-        // DATABASE VARIABLES
+        // DATABASE ENVIRONMENT VARIABLES
         // =========================================
 
-        String url =
-                System.getenv("DB_URL");
-
-        String username =
-                System.getenv("DB_USERNAME");
-
-        String dbPassword =
-                System.getenv("DB_PASSWORD");
+        String url = System.getenv("DB_URL");
+        String username = System.getenv("DB_USERNAME");
+        String dbPassword = System.getenv("DB_PASSWORD");
 
         if (url == null || url.isBlank()
                 || username == null || username.isBlank()
@@ -88,17 +81,18 @@ public class LoginServlet extends HttpServlet {
         }
 
         // =========================================
-        // HASH ENTERED PASSWORD
+        // HASH PASSWORD
         // =========================================
 
         String passwordHash;
 
         try {
 
-            passwordHash =
-                    hashPassword(password);
+            passwordHash = hashPassword(password);
 
         } catch (Exception e) {
+
+            e.printStackTrace();
 
             showMessage(
                     out,
@@ -109,7 +103,7 @@ public class LoginServlet extends HttpServlet {
         }
 
         // =========================================
-        // FIND USER
+        // SQL QUERY
         // =========================================
 
         String sql = """
@@ -119,38 +113,28 @@ public class LoginServlet extends HttpServlet {
             AND password_hash = ?
             """;
 
+        // =========================================
+        // DATABASE CONNECTION
+        // =========================================
+
         try {
 
-            // Load MySQL driver
-            Class.forName(
-                    "com.mysql.cj.jdbc.Driver"
-            );
+            Class.forName("com.mysql.cj.jdbc.Driver");
 
-            // Connect to database
             try (
-                Connection con =
-                        DriverManager.getConnection(
-                                url,
-                                username,
-                                dbPassword
-                        );
+                Connection con = DriverManager.getConnection(
+                        url,
+                        username,
+                        dbPassword
+                );
 
-                PreparedStatement ps =
-                        con.prepareStatement(sql)
+                PreparedStatement ps = con.prepareStatement(sql)
             ) {
 
-                ps.setString(
-                        1,
-                        email.trim()
-                );
+                ps.setString(1, email.trim());
+                ps.setString(2, passwordHash);
 
-                ps.setString(
-                        2,
-                        passwordHash
-                );
-
-                try (ResultSet rs =
-                        ps.executeQuery()) {
+                try (ResultSet rs = ps.executeQuery()) {
 
                     // =================================
                     // LOGIN SUCCESS
@@ -158,8 +142,7 @@ public class LoginServlet extends HttpServlet {
 
                     if (rs.next()) {
 
-                        int userId =
-                                rs.getInt("id");
+                        int userId = rs.getInt("id");
 
                         String fullName =
                                 rs.getString("full_name");
@@ -198,7 +181,7 @@ public class LoginServlet extends HttpServlet {
                         );
 
                         // =================================
-                        // SEND LOGIN SUCCESS EMAIL
+                        // SEND LOGIN EMAIL
                         // =================================
 
                         try {
@@ -210,19 +193,17 @@ public class LoginServlet extends HttpServlet {
 
                         } catch (Exception emailException) {
 
-                            // Email failure should NOT
-                            // prevent the user from logging in.
+                            // Email failure should not
+                            // stop the login.
 
                             emailException.printStackTrace();
                         }
 
                         // =================================
-                        // GO TO PROFILE
+                        // REDIRECT TO PROFILE
                         // =================================
 
-                        response.sendRedirect(
-                                "profile.jsp"
-                        );
+                        response.sendRedirect("profile.jsp");
 
                         return;
 
@@ -249,7 +230,6 @@ public class LoginServlet extends HttpServlet {
         }
     }
 
-
     // =============================================
     // SEND LOGIN EMAIL USING EMAILJS
     // =============================================
@@ -259,20 +239,20 @@ public class LoginServlet extends HttpServlet {
             String userEmail) throws Exception {
 
         // =========================================
-        // GET EMAILJS ENVIRONMENT VARIABLES
+        // EMAILJS ENVIRONMENT VARIABLES
         // =========================================
 
         String serviceId =
                 System.getenv("EMAILJS_SERVICE_ID");
 
         String templateId =
-                System.getenv("EMAILJS_TEMPLATE_ID");
+                System.getenv("EMAILJS_LOGIN_TEMPLATE_ID");
 
         String publicKey =
                 System.getenv("EMAILJS_PUBLIC_KEY");
 
         // =========================================
-        // CHECK EMAILJS VARIABLES
+        // CHECK VARIABLES
         // =========================================
 
         if (serviceId == null || serviceId.isBlank()
@@ -285,7 +265,7 @@ public class LoginServlet extends HttpServlet {
         }
 
         // =========================================
-        // CREATE JSON REQUEST
+        // CREATE JSON
         // =========================================
 
         String json = """
@@ -307,17 +287,17 @@ public class LoginServlet extends HttpServlet {
         );
 
         // =========================================
-        // CREATE HTTP CLIENT
+        // HTTP CLIENT
         // =========================================
 
         HttpClient client =
                 HttpClient.newHttpClient();
 
         // =========================================
-        // CREATE EMAILJS REQUEST
+        // EMAILJS REQUEST
         // =========================================
 
-        HttpRequest request =
+        HttpRequest emailRequest =
                 HttpRequest.newBuilder()
                         .uri(
                             URI.create(
@@ -335,12 +315,12 @@ public class LoginServlet extends HttpServlet {
                         .build();
 
         // =========================================
-        // SEND REQUEST
+        // SEND EMAIL
         // =========================================
 
-        HttpResponse<String> response =
+        HttpResponse<String> emailResponse =
                 client.send(
-                        request,
+                        emailRequest,
                         HttpResponse.BodyHandlers.ofString()
                 );
 
@@ -348,24 +328,22 @@ public class LoginServlet extends HttpServlet {
         // CHECK RESPONSE
         // =========================================
 
-        if (response.statusCode() != 200) {
+        if (emailResponse.statusCode() != 200) {
 
             throw new Exception(
                     "EmailJS failed. HTTP "
-                    + response.statusCode()
+                    + emailResponse.statusCode()
                     + ": "
-                    + response.body()
+                    + emailResponse.body()
             );
         }
     }
 
-
     // =============================================
-    // JSON ESCAPE
+    // ESCAPE JSON
     // =============================================
 
-    private String escapeJson(
-            String text) {
+    private String escapeJson(String text) {
 
         if (text == null) {
             return "";
@@ -376,19 +354,15 @@ public class LoginServlet extends HttpServlet {
                 .replace("\"", "\\\"");
     }
 
-
     // =============================================
     // PASSWORD HASH
     // =============================================
 
     private String hashPassword(
-            String password)
-            throws Exception {
+            String password) throws Exception {
 
         MessageDigest digest =
-                MessageDigest.getInstance(
-                        "SHA-256"
-                );
+                MessageDigest.getInstance("SHA-256");
 
         byte[] hash =
                 digest.digest(
@@ -415,9 +389,8 @@ public class LoginServlet extends HttpServlet {
         return hex.toString();
     }
 
-
     // =============================================
-    // ERROR PAGE
+    // SHOW ERROR MESSAGE
     // =============================================
 
     private void showMessage(
@@ -429,9 +402,7 @@ public class LoginServlet extends HttpServlet {
             <html>
             <head>
 
-                <title>
-                    FoodieHub - Login
-                </title>
+                <title>FoodieHub - Login</title>
 
                 <style>
 
@@ -482,16 +453,12 @@ public class LoginServlet extends HttpServlet {
 
                 <div class="card">
 
-                    <h1>
-                        Login Failed
-                    </h1>
+                    <h1>Login Failed</h1>
 
                     <p>
             """);
 
-        out.println(
-                escapeHtml(message)
-        );
+        out.println(escapeHtml(message));
 
         out.println("""
                     </p>
@@ -507,13 +474,11 @@ public class LoginServlet extends HttpServlet {
             """);
     }
 
-
     // =============================================
-    // HTML ESCAPE
+    // ESCAPE HTML
     // =============================================
 
-    private String escapeHtml(
-            String text) {
+    private String escapeHtml(String text) {
 
         if (text == null) {
             return "";
