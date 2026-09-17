@@ -24,7 +24,6 @@ public class RegisterServlet extends HttpServlet {
 
         PrintWriter out = response.getWriter();
 
-
         // =========================================
         // GET FORM VALUES
         // =========================================
@@ -152,11 +151,13 @@ public class RegisterServlet extends HttpServlet {
 
         try {
 
+            // Load MySQL driver
             Class.forName(
                     "com.mysql.cj.jdbc.Driver"
             );
 
 
+            // Connect to database
             try (
                 Connection con =
                         DriverManager.getConnection(
@@ -287,11 +288,13 @@ public class RegisterServlet extends HttpServlet {
 
         } catch (Exception e) {
 
+            // Print the complete error in Render logs
             e.printStackTrace();
 
+            // Show the REAL error in browser
             showMessage(
                     out,
-                    "Registration failed. The email may already be registered."
+                    "Registration failed: " + e.getMessage()
             );
         }
     }
