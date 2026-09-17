@@ -63,14 +63,9 @@ public class RegisterServlet extends HttpServlet {
         // DATABASE ENVIRONMENT VARIABLES
         // =========================================
 
-        String url =
-                System.getenv("DB_URL");
-
-        String username =
-                System.getenv("DB_USERNAME");
-
-        String dbPassword =
-                System.getenv("DB_PASSWORD");
+        String url = System.getenv("DB_URL");
+String username = System.getenv("DB_USERNAME");
+String dbPassword = System.getenv("DB_PASSWORD");
 
 
         if (url == null || url.isBlank()) {
