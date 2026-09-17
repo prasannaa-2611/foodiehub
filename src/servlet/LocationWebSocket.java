@@ -8,14 +8,26 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+
 @ServerEndpoint("/location")
 public class LocationWebSocket {
+
+    // Store all connected WebSocket clients
+    private static final Set<Session> connectedSessions =
+            new CopyOnWriteArraySet<>();
+
 
     @OnOpen
     public void onOpen(Session session) {
 
-        System.out.println("WebSocket connected");
+        connectedSessions.add(session);
 
+        System.out.println(
+                "WebSocket connected. Total clients: "
+                + connectedSessions.size()
+        );
     }
 
 
@@ -23,118 +35,138 @@ public class LocationWebSocket {
     public void onMessage(String message, Session session) {
 
         System.out.println(
-            "Location received: " + message
+                "Location received: " + message
         );
 
         try {
 
-            // Expected:
-            // {"orderId":"201","latitude":16.123,"longitude":81.456}
+            // -----------------------------------------
+            // READ JSON VALUES
+            // -----------------------------------------
 
             String orderIdText =
-                getValue(message, "orderId");
+                    getValue(message, "orderId");
 
             String latitudeText =
-                getValue(message, "latitude");
+                    getValue(message, "latitude");
 
             String longitudeText =
-                getValue(message, "longitude");
+                    getValue(message, "longitude");
 
 
             int orderId =
-                Integer.parseInt(orderIdText);
+                    Integer.parseInt(orderIdText);
 
             double latitude =
-                Double.parseDouble(latitudeText);
+                    Double.parseDouble(latitudeText);
 
             double longitude =
-                Double.parseDouble(longitudeText);
+                    Double.parseDouble(longitudeText);
 
 
-            // =========================================
+            // -----------------------------------------
             // DATABASE
-            // =========================================
+            // -----------------------------------------
 
             String url =
-                System.getenv("DB_URL");
+                    System.getenv("DB_URL");
 
             String username =
-                System.getenv("DB_USERNAME");
+                    System.getenv("DB_USERNAME");
 
             String password =
-                System.getenv("DB_PASSWORD");
+                    System.getenv("DB_PASSWORD");
+
+
+            if (url == null ||
+                    username == null ||
+                    password == null) {
+
+                System.out.println(
+                        "Database environment variables missing."
+                );
+
+                return;
+            }
 
 
             if (url.startsWith("mysql://")) {
-
                 url = "jdbc:" + url;
-
             }
 
 
             String sql = """
-                UPDATE orders
-                SET delivery_latitude = ?,
-                    delivery_longitude = ?,
-                    location_updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-                """;
+                    UPDATE orders
+                    SET delivery_latitude = ?,
+                        delivery_longitude = ?,
+                        location_updated_at = CURRENT_TIMESTAMP
+                    WHERE id = ?
+                    """;
 
 
             try (
                 Connection con =
-                    DriverManager.getConnection(
-                        url,
-                        username,
-                        password
-                    );
+                        DriverManager.getConnection(
+                                url,
+                                username,
+                                password
+                        );
 
                 PreparedStatement ps =
-                    con.prepareStatement(sql)
+                        con.prepareStatement(sql)
             ) {
 
                 ps.setDouble(1, latitude);
-
                 ps.setDouble(2, longitude);
-
                 ps.setInt(3, orderId);
 
 
                 int rows =
-                    ps.executeUpdate();
+                        ps.executeUpdate();
 
 
                 if (rows > 0) {
 
                     System.out.println(
-                        "Location saved for order "
-                        + orderId
+                            "Location saved for order "
+                            + orderId
                     );
 
 
-                    // =========================================
-                    // SEND LOCATION TO CONNECTED CLIENTS
-                    // =========================================
+                    // -----------------------------------------
+                    // BROADCAST TO ALL CONNECTED CLIENTS
+                    // -----------------------------------------
 
-                    for (
-                        Session connectedSession :
-                        session.getOpenSessions()
-                    ) {
+                    System.out.println(
+                            "Broadcasting location to "
+                            + connectedSessions.size()
+                            + " clients."
+                    );
 
-                        if (
-                            connectedSession.isOpen()
-                        ) {
+
+                    for (Session connectedSession :
+                            connectedSessions) {
+
+                        if (connectedSession.isOpen()) {
 
                             try {
 
                                 connectedSession
-                                    .getBasicRemote()
-                                    .sendText(message);
+                                        .getBasicRemote()
+                                        .sendText(message);
+
+                                System.out.println(
+                                        "Location sent to client: "
+                                        + connectedSession.getId()
+                                );
 
                             } catch (Exception sendError) {
 
-                                sendError.printStackTrace();
+                                System.out.println(
+                                        "Could not send location to client."
+                                );
 
+                                sendError.printStackTrace();
                             }
                         }
                     }
@@ -142,42 +174,39 @@ public class LocationWebSocket {
                 } else {
 
                     System.out.println(
-                        "Order not found: "
-                        + orderId
+                            "Order not found: "
+                            + orderId
                     );
-
                 }
             }
 
         } catch (Exception e) {
 
             e.printStackTrace();
-
         }
     }
 
 
-    // =========================================
+    // -----------------------------------------
     // SIMPLE JSON VALUE READER
-    // =========================================
+    // -----------------------------------------
 
     private String getValue(
             String json,
             String key) {
 
         String search =
-            "\"" + key + "\":";
+                "\"" + key + "\":";
 
         int start =
-            json.indexOf(search);
+                json.indexOf(search);
 
 
         if (start == -1) {
 
             throw new IllegalArgumentException(
-                "Missing field: " + key
+                    "Missing field: " + key
             );
-
         }
 
 
@@ -185,17 +214,16 @@ public class LocationWebSocket {
 
 
         while (
-            start < json.length()
-            &&
-            (
-                json.charAt(start) == ' '
-                ||
-                json.charAt(start) == '"'
-            )
+                start < json.length()
+                &&
+                (
+                    json.charAt(start) == ' '
+                    ||
+                    json.charAt(start) == '"'
+                )
         ) {
 
             start++;
-
         }
 
 
@@ -203,32 +231,33 @@ public class LocationWebSocket {
 
 
         while (
-            end < json.length()
-            &&
-            json.charAt(end) != ','
-            &&
-            json.charAt(end) != '}'
-            &&
-            json.charAt(end) != '"'
+                end < json.length()
+                &&
+                json.charAt(end) != ','
+                &&
+                json.charAt(end) != '}'
+                &&
+                json.charAt(end) != '"'
         ) {
 
             end++;
-
         }
 
 
         return json
-            .substring(start, end)
-            .trim();
+                .substring(start, end)
+                .trim();
     }
 
 
     @OnClose
     public void onClose(Session session) {
 
-        System.out.println(
-            "WebSocket disconnected"
-        );
+        connectedSessions.remove(session);
 
+        System.out.println(
+                "WebSocket disconnected. Total clients: "
+                + connectedSessions.size()
+        );
     }
 }
