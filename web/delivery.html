@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>FoodieHub - Delivery Tracking</title>
+</head>
+
+<body>
+
+<h2>🚚 FoodieHub Delivery</h2>
+
+<p id="status">Connecting...</p>
+
+<script>
+    const status = document.getElementById("status");
+
+    // Connect to the Java WebSocket
+    const protocol = location.protocol === "https:" ? "wss://" : "ws://";
+
+    const socket = new WebSocket(
+        protocol + location.host + "/location"
+    );
+
+    socket.onopen = function () {
+        status.innerText = "WebSocket connected ✅";
+        startLocationSharing();
+    };
+
+    socket.onclose = function () {
+        status.innerText = "WebSocket disconnected ❌";
+    };
+
+    socket.onerror = function () {
+        status.innerText = "WebSocket error ❌";
+    };
+
+
+    function startLocationSharing() {
+
+        if (!navigator.geolocation) {
+            status.innerText = "GPS is not supported ❌";
+            return;
+        }
+
+        navigator.geolocation.watchPosition(
+
+            function (position) {
+
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+
+                const locationData = {
+                    latitude: latitude,
+                    longitude: longitude
+                };
+
+                // Send GPS location to Java WebSocket
+                if (socket.readyState === WebSocket.OPEN) {
+
+                    socket.send(JSON.stringify(locationData));
+
+                    status.innerText =
+                        "Location sharing active 📍\n" +
+                        "Latitude: " + latitude + "\n" +
+                        "Longitude: " + longitude;
+                }
+
+            },
+
+            function (error) {
+
+                status.innerText =
+                    "Please allow location permission ❌";
+
+                console.log(error);
+
+            },
+
+            {
+                enableHighAccuracy: true,
+                maximumAge: 5000,
+                timeout: 10000
+            }
+        );
+    }
+</script>
+
+</body>
+</html>
