@@ -1,17 +1,12 @@
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.util.Properties;
-
-import jakarta.mail.Authenticator;
-import jakarta.mail.Message;
-import jakarta.mail.PasswordAuthentication;
-import jakarta.mail.Session;
-import jakarta.mail.Transport;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -309,6 +304,18 @@ public class OrderServlet extends HttpServlet {
                     "ORDER STEP: Starting email sending..."
             );
 
+            sendOrderEmail(
+                    customerEmail,
+                    customerName,
+                    foodName,
+                    quantity,
+                    fullName,
+                    phone,
+                    addressLine,
+                    city,
+                    state,
+                    pincode
+            );
 
             System.out.println(
                     "ORDER STEP: Email method completed"
@@ -621,8 +628,9 @@ public class OrderServlet extends HttpServlet {
         }
     }
 
+
     // =========================================================
-    // SEND ORDER EMAIL
+    // SEND ORDER EMAIL USING EMAILJS
     // =========================================================
 
     private void sendOrderEmail(
@@ -639,183 +647,212 @@ public class OrderServlet extends HttpServlet {
             throws Exception {
 
         System.out.println(
-                "MAIL STEP 1: entered sendOrderEmail"
+                "EMAILJS STEP 1: entered sendOrderEmail"
         );
 
         // =====================================================
-        // GET EMAIL ENVIRONMENT VARIABLES
+        // GET EMAILJS ENVIRONMENT VARIABLES
         // =====================================================
 
-        String senderEmail =
-                System.getenv("EMAIL_USERNAME");
+        String serviceId =
+                System.getenv("EMAILJS_SERVICE_ID");
 
-        String senderPassword =
-                System.getenv("EMAIL_PASSWORD");
+        String templateId =
+                System.getenv("EMAILJS_TEMPLATE_ID");
 
-        if (senderEmail == null ||
-                senderEmail.isBlank()) {
+        String publicKey =
+                System.getenv("EMAILJS_PUBLIC_KEY");
 
+        if (serviceId == null || serviceId.isBlank()) {
             throw new Exception(
-                    "EMAIL_USERNAME is missing."
+                    "EMAILJS_SERVICE_ID is missing in Render Environment Variables."
             );
         }
 
-        if (senderPassword == null ||
-                senderPassword.isBlank()) {
-
+        if (templateId == null || templateId.isBlank()) {
             throw new Exception(
-                    "EMAIL_PASSWORD is missing."
+                    "EMAILJS_TEMPLATE_ID is missing in Render Environment Variables."
+            );
+        }
+
+        if (publicKey == null || publicKey.isBlank()) {
+            throw new Exception(
+                    "EMAILJS_PUBLIC_KEY is missing in Render Environment Variables."
             );
         }
 
         System.out.println(
-                "MAIL STEP 2: Email environment variables found"
+                "EMAILJS STEP 2: Environment variables found"
         );
 
         // =====================================================
-        // GMAIL SMTP SETTINGS
+        // CREATE JSON REQUEST FOR EMAILJS
         // =====================================================
 
-        Properties props = new Properties();
-
-        props.put(
-                "mail.smtp.auth",
-                "true"
-        );
-
-        props.put(
-                "mail.smtp.starttls.enable",
-                "true"
-        );
-
-        props.put(
-                "mail.smtp.host",
-                "smtp.gmail.com"
-        );
-
-        props.put(
-                "mail.smtp.port",
-                "587"
-        );
-
-        // Timeout settings so the request doesn't wait forever
-        props.put(
-                "mail.smtp.connectiontimeout",
-                "10000"
-        );
-
-        props.put(
-                "mail.smtp.timeout",
-                "10000"
-        );
-
-        props.put(
-                "mail.smtp.writetimeout",
-                "10000"
-        );
+        String json = "{"
+                + "\"service_id\":\""
+                + jsonEscape(serviceId)
+                + "\","
+                + "\"template_id\":\""
+                + jsonEscape(templateId)
+                + "\","
+                + "\"user_id\":\""
+                + jsonEscape(publicKey)
+                + "\","
+                + "\"template_params\":{"
+                + "\"customer_name\":\""
+                + jsonEscape(customerName)
+                + "\","
+                + "\"customer_email\":\""
+                + jsonEscape(customerEmail)
+                + "\","
+                + "\"food_name\":\""
+                + jsonEscape(foodName)
+                + "\","
+                + "\"quantity\":\""
+                + quantity
+                + "\","
+                + "\"full_name\":\""
+                + jsonEscape(fullName)
+                + "\","
+                + "\"phone\":\""
+                + jsonEscape(phone)
+                + "\","
+                + "\"address_line\":\""
+                + jsonEscape(addressLine)
+                + "\","
+                + "\"city\":\""
+                + jsonEscape(city)
+                + "\","
+                + "\"state\":\""
+                + jsonEscape(state)
+                + "\","
+                + "\"pincode\":\""
+                + jsonEscape(pincode)
+                + "\""
+                + "}"
+                + "}";
 
         System.out.println(
-                "MAIL STEP 3: SMTP properties created"
+                "EMAILJS STEP 3: JSON request created"
         );
 
         // =====================================================
-        // CREATE MAIL SESSION
+        // CONNECT TO EMAILJS REST API
         // =====================================================
 
-        Session mailSession =
-                Session.getInstance(
-                        props,
-                        new Authenticator() {
+        URL url = new URL(
+                "https://api.emailjs.com/api/v1.0/email/send"
+        );
 
-                            @Override
-                            protected PasswordAuthentication
-                            getPasswordAuthentication() {
+        HttpURLConnection connection =
+                (HttpURLConnection) url.openConnection();
 
-                                return new PasswordAuthentication(
-                                        senderEmail,
-                                        senderPassword
-                                );
-                            }
-                        }
-                );
+        connection.setRequestMethod("POST");
+        connection.setRequestProperty(
+                "Content-Type",
+                "application/json"
+        );
+        connection.setRequestProperty(
+                "Accept",
+                "application/json"
+        );
+
+        connection.setConnectTimeout(10000);
+        connection.setReadTimeout(15000);
+        connection.setDoOutput(true);
 
         System.out.println(
-                "MAIL STEP 4: mail session created"
+                "EMAILJS STEP 4: Sending request to EmailJS"
         );
 
         // =====================================================
-        // CREATE EMAIL MESSAGE
+        // SEND REQUEST
         // =====================================================
 
-        Message message =
-                new MimeMessage(mailSession);
+        try (var outputStream = connection.getOutputStream()) {
+            outputStream.write(
+                    json.getBytes(StandardCharsets.UTF_8)
+            );
+        }
+
+        int responseCode =
+                connection.getResponseCode();
 
         System.out.println(
-                "MAIL STEP 5: message created"
-        );
-
-        message.setFrom(
-                new InternetAddress(senderEmail)
-        );
-
-        message.setRecipients(
-                Message.RecipientType.TO,
-                InternetAddress.parse(
-                        customerEmail
-                )
-        );
-
-        message.setSubject(
-                "FoodieHub - Order Confirmed"
-        );
-
-        String emailBody =
-                "Hello " + customerName + ",\n\n"
-
-                + "Your FoodieHub order has been "
-                + "placed successfully!\n\n"
-
-                + "ORDER DETAILS\n"
-                + "--------------------------\n"
-
-                + "Food: " + foodName + "\n"
-
-                + "Quantity: " + quantity + "\n\n"
-
-                + "DELIVERY ADDRESS\n"
-                + "--------------------------\n"
-
-                + "Name: " + fullName + "\n"
-
-                + "Phone: " + phone + "\n"
-
-                + "Address: " + addressLine + "\n"
-
-                + "City: " + city + "\n"
-
-                + "State: " + state + "\n"
-
-                + "Pincode: " + pincode + "\n\n"
-
-                + "Thank you for ordering "
-                + "with FoodieHub!\n";
-
-        message.setText(emailBody);
-
-        System.out.println(
-                "MAIL STEP 6: about to send email"
+                "EMAILJS STEP 5: Response code = "
+                        + responseCode
         );
 
         // =====================================================
-        // SEND EMAIL
+        // READ EMAILJS RESPONSE
         // =====================================================
 
-        Transport.send(message);
+        java.io.InputStream responseStream;
+
+        if (responseCode >= 200 && responseCode < 300) {
+            responseStream = connection.getInputStream();
+        } else {
+            responseStream = connection.getErrorStream();
+        }
+
+        StringBuilder responseText =
+                new StringBuilder();
+
+        if (responseStream != null) {
+            try (java.io.BufferedReader reader =
+                         new java.io.BufferedReader(
+                                 new java.io.InputStreamReader(
+                                         responseStream,
+                                         StandardCharsets.UTF_8
+                                 )
+                         )) {
+
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    responseText.append(line);
+                }
+            }
+        }
+
+        connection.disconnect();
+
+        if (responseCode < 200 || responseCode >= 300) {
+            throw new Exception(
+                    "EmailJS failed. HTTP "
+                            + responseCode
+                            + ": "
+                            + responseText
+            );
+        }
 
         System.out.println(
-                "MAIL STEP 7: EMAIL SENT SUCCESSFULLY"
+                "EMAILJS STEP 6: EMAIL SENT SUCCESSFULLY"
         );
     }
+
+
+    // =========================================================
+    // JSON ESCAPE
+    // =========================================================
+
+    private String jsonEscape(String text) {
+
+        if (text == null) {
+            return "";
+        }
+
+        return text
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\b", "\\b")
+                .replace("\f", "\\f")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
+    }
+
 
     // =========================================================
     // ERROR PAGE
@@ -935,6 +972,7 @@ public class OrderServlet extends HttpServlet {
             """);
     }
 
+
     // =========================================================
     // HTML ESCAPE
     // =========================================================
@@ -953,87 +991,3 @@ public class OrderServlet extends HttpServlet {
                 .replace("'", "&#39;");
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
