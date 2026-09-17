@@ -1,5 +1,9 @@
-import java.io.IOException;
+import java.import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -23,9 +27,7 @@ public class LoginServlet extends HttpServlet {
             throws ServletException, IOException {
 
         response.setContentType("text/html;charset=UTF-8");
-
         PrintWriter out = response.getWriter();
-
 
         // =========================================
         // GET FORM VALUES
@@ -36,7 +38,6 @@ public class LoginServlet extends HttpServlet {
 
         String password =
                 request.getParameter("password");
-
 
         // =========================================
         // VALIDATION
@@ -53,7 +54,6 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-
         // =========================================
         // DATABASE VARIABLES
         // =========================================
@@ -67,7 +67,6 @@ public class LoginServlet extends HttpServlet {
         String dbPassword =
                 System.getenv("DB_PASSWORD");
 
-
         if (url == null || url.isBlank()
                 || username == null || username.isBlank()
                 || dbPassword == null || dbPassword.isBlank()) {
@@ -80,11 +79,13 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
+        // =========================================
+        // JDBC URL
+        // =========================================
 
         if (url.startsWith("mysql://")) {
             url = "jdbc:" + url;
         }
-
 
         // =========================================
         // HASH ENTERED PASSWORD
@@ -107,7 +108,6 @@ public class LoginServlet extends HttpServlet {
             return;
         }
 
-
         // =========================================
         // FIND USER
         // =========================================
@@ -119,14 +119,14 @@ public class LoginServlet extends HttpServlet {
             AND password_hash = ?
             """;
 
-
         try {
 
+            // Load MySQL driver
             Class.forName(
                     "com.mysql.cj.jdbc.Driver"
             );
 
-
+            // Connect to database
             try (
                 Connection con =
                         DriverManager.getConnection(
@@ -149,16 +149,14 @@ public class LoginServlet extends HttpServlet {
                         passwordHash
                 );
 
-
                 try (ResultSet rs =
                         ps.executeQuery()) {
 
+                    // =================================
+                    // LOGIN SUCCESS
+                    // =================================
 
                     if (rs.next()) {
-
-                        // =================================
-                        // LOGIN SUCCESS
-                        // =================================
 
                         int userId =
                                 rs.getInt("id");
@@ -172,8 +170,10 @@ public class LoginServlet extends HttpServlet {
                         String phone =
                                 rs.getString("phone");
 
+                        // =================================
+                        // CREATE SESSION
+                        // =================================
 
-                        // Create session
                         HttpSession session =
                                 request.getSession();
 
@@ -197,8 +197,29 @@ public class LoginServlet extends HttpServlet {
                                 phone
                         );
 
+                        // =================================
+                        // SEND LOGIN SUCCESS EMAIL
+                        // =================================
 
-                        // Go to profile
+                        try {
+
+                            sendLoginEmail(
+                                    fullName,
+                                    userEmail
+                            );
+
+                        } catch (Exception emailException) {
+
+                            // Email failure should NOT
+                            // prevent the user from logging in.
+
+                            emailException.printStackTrace();
+                        }
+
+                        // =================================
+                        // GO TO PROFILE
+                        // =================================
+
                         response.sendRedirect(
                                 "profile.jsp"
                         );
@@ -217,7 +238,6 @@ public class LoginServlet extends HttpServlet {
                 }
             }
 
-
         } catch (Exception e) {
 
             e.printStackTrace();
@@ -231,6 +251,133 @@ public class LoginServlet extends HttpServlet {
 
 
     // =============================================
+    // SEND LOGIN EMAIL USING EMAILJS
+    // =============================================
+
+    private void sendLoginEmail(
+            String userName,
+            String userEmail) throws Exception {
+
+        // =========================================
+        // GET EMAILJS ENVIRONMENT VARIABLES
+        // =========================================
+
+        String serviceId =
+                System.getenv("EMAILJS_SERVICE_ID");
+
+        String templateId =
+                System.getenv("EMAILJS_TEMPLATE_ID");
+
+        String publicKey =
+                System.getenv("EMAILJS_PUBLIC_KEY");
+
+        // =========================================
+        // CHECK EMAILJS VARIABLES
+        // =========================================
+
+        if (serviceId == null || serviceId.isBlank()
+                || templateId == null || templateId.isBlank()
+                || publicKey == null || publicKey.isBlank()) {
+
+            throw new Exception(
+                    "EmailJS environment variables are missing."
+            );
+        }
+
+        // =========================================
+        // CREATE JSON REQUEST
+        // =========================================
+
+        String json = """
+            {
+              "service_id": "%s",
+              "template_id": "%s",
+              "user_id": "%s",
+              "template_params": {
+                "user_name": "%s",
+                "user_email": "%s"
+              }
+            }
+            """.formatted(
+                escapeJson(serviceId),
+                escapeJson(templateId),
+                escapeJson(publicKey),
+                escapeJson(userName),
+                escapeJson(userEmail)
+        );
+
+        // =========================================
+        // CREATE HTTP CLIENT
+        // =========================================
+
+        HttpClient client =
+                HttpClient.newHttpClient();
+
+        // =========================================
+        // CREATE EMAILJS REQUEST
+        // =========================================
+
+        HttpRequest request =
+                HttpRequest.newBuilder()
+                        .uri(
+                            URI.create(
+                                "https://api.emailjs.com/api/v1.0/email/send"
+                            )
+                        )
+                        .header(
+                            "Content-Type",
+                            "application/json"
+                        )
+                        .POST(
+                            HttpRequest.BodyPublishers
+                                    .ofString(json)
+                        )
+                        .build();
+
+        // =========================================
+        // SEND REQUEST
+        // =========================================
+
+        HttpResponse<String> response =
+                client.send(
+                        request,
+                        HttpResponse.BodyHandlers.ofString()
+                );
+
+        // =========================================
+        // CHECK RESPONSE
+        // =========================================
+
+        if (response.statusCode() != 200) {
+
+            throw new Exception(
+                    "EmailJS failed. HTTP "
+                    + response.statusCode()
+                    + ": "
+                    + response.body()
+            );
+        }
+    }
+
+
+    // =============================================
+    // JSON ESCAPE
+    // =============================================
+
+    private String escapeJson(
+            String text) {
+
+        if (text == null) {
+            return "";
+        }
+
+        return text
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"");
+    }
+
+
+    // =============================================
     // PASSWORD HASH
     // =============================================
 
@@ -239,7 +386,9 @@ public class LoginServlet extends HttpServlet {
             throws Exception {
 
         MessageDigest digest =
-                MessageDigest.getInstance("SHA-256");
+                MessageDigest.getInstance(
+                        "SHA-256"
+                );
 
         byte[] hash =
                 digest.digest(
@@ -277,21 +426,19 @@ public class LoginServlet extends HttpServlet {
 
         out.println("""
             <!DOCTYPE html>
-
             <html>
-
             <head>
 
-                <title>FoodieHub - Login</title>
+                <title>
+                    FoodieHub - Login
+                </title>
 
                 <style>
 
                     body {
                         font-family: Arial;
                         background: #fff8f0;
-
                         min-height: 100vh;
-
                         display: flex;
                         align-items: center;
                         justify-content: center;
@@ -299,15 +446,10 @@ public class LoginServlet extends HttpServlet {
 
                     .card {
                         background: white;
-
                         padding: 40px;
-
                         border-radius: 20px;
-
                         text-align: center;
-
                         max-width: 500px;
-
                         box-shadow:
                             0 10px 30px
                             rgba(0,0,0,0.1);
@@ -324,17 +466,11 @@ public class LoginServlet extends HttpServlet {
 
                     a {
                         display: inline-block;
-
                         margin-top: 20px;
-
                         padding: 12px 25px;
-
                         background: #ff6b00;
-
                         color: white;
-
                         text-decoration: none;
-
                         border-radius: 10px;
                     }
 
@@ -367,7 +503,6 @@ public class LoginServlet extends HttpServlet {
                 </div>
 
             </body>
-
             </html>
             """);
     }
