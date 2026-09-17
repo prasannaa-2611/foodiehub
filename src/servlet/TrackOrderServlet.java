@@ -1,629 +1,284 @@
 import java.io.IOException;
-
 import java.sql.Connection;
-
 import java.sql.DriverManager;
-
 import java.sql.PreparedStatement;
-
 import java.sql.ResultSet;
 
+import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
-
 import jakarta.servlet.annotation.WebServlet;
-
 import jakarta.servlet.http.HttpServlet;
-
 import jakarta.servlet.http.HttpServletRequest;
-
 import jakarta.servlet.http.HttpServletResponse;
-
 import jakarta.servlet.http.HttpSession;
 
-@*WebServlet*("/TrackOrderServlet")
-
+@WebServlet("/TrackOrderServlet")
 public class TrackOrderServlet extends HttpServlet {
 
-    @*Override*
+    @Override
+    protected void doGet(
+            HttpServletRequest request,
+            HttpServletResponse response)
+            throws ServletException, IOException {
+
+        // Check login
+        HttpSession session = request.getSession(false);
+
+        if (session == null ||
+                session.getAttribute("userId") == null) {
+
+            response.sendRedirect("login.html");
+            return;
+        }
+
+        // Get logged-in user's ID
+        int userId;
+
+        try {
+            userId = Integer.parseInt(
+                    session.getAttribute("userId").toString()
+            );
+        } catch (Exception e) {
+            response.sendRedirect("login.html");
+            return;
+        }
+
+        // Get order ID
+        String orderIdText =
+                request.getParameter("orderId");
+
+        if (orderIdText == null ||
+                orderIdText.trim().isEmpty()) {
+
+            response.sendError(
+                    HttpServletResponse.SC_BAD_REQUEST,
+                    "Order ID is missing"
+            );
+            return;
+        }
+
+        int orderId;
+
+        try {
+            orderId = Integer.parseInt(orderIdText);
+        } catch (NumberFormatException e) {
+
+            response.sendError(
+                    HttpServletResponse.SC_BAD_REQUEST,
+                    "Invalid Order ID"
+            );
+            return;
+        }
+
+        // Database configuration
+        String url = System.getenv("DB_URL");
+        String username = System.getenv("DB_USERNAME");
+        String password = System.getenv("DB_PASSWORD");
+
+        if (url == null ||
+                username == null ||
+                password == null) {
+
+            response.sendError(
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Database configuration is missing"
+            );
+            return;
+        }
+
+        if (url.startsWith("mysql://")) {
+            url = "jdbc:" + url;
+        }
+
+        String sql = """
+                SELECT
+                    id,
+                    customer_name,
+                    food_name,
+                    quantity,
+                    status,
+                    delivery_latitude,
+                    delivery_longitude
+                FROM orders
+                WHERE id = ?
+                AND user_id = ?
+                """;
+
+        try {
+
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            try (
+                Connection con =
+                        DriverManager.getConnection(
+                                url,
+                                username,
+                                password
+                        );
+
+                PreparedStatement ps =
+                        con.prepareStatement(sql)
+            ) {
+
+                ps.setInt(1, orderId);
+                ps.setInt(2, userId);
+
+                try (ResultSet rs = ps.executeQuery()) {
+
+                    if (!rs.next()) {
 
-    protected *void* doGet(
+                        response.sendError(
+                                HttpServletResponse.SC_NOT_FOUND,
+                                "Order not found"
+                        );
+                        return;
+                    }
 
-            *HttpServletRequest* request,
+                    String customerName =
+                            rs.getString("customer_name");
 
-            *HttpServletResponse* response)
+                    String foodName =
+                            rs.getString("food_name");
 
-            throws *ServletException*, *IOException* {
+                    int quantity =
+                            rs.getInt("quantity");
 
-        *// =========================================*
+                    String status =
+                            rs.getString("status");
 
-        *// CHECK LOGIN*
+                    Double latitude =
+                            (Double) rs.getObject(
+                                    "delivery_latitude"
+                            );
 
-        *// =========================================*
+                    Double longitude =
+                            (Double) rs.getObject(
+                                    "delivery_longitude"
+                            );
 
-        *HttpSession* session = request.getSession(false);
+                    // Send order information to JSP
+                    request.setAttribute(
+                            "orderId",
+                            orderId
+                    );
 
-        *if* (session == null ||
+                    request.setAttribute(
+                            "customerName",
+                            escapeHtml(customerName)
+                    );
 
-                session.getAttribute("userId") == null) {
+                    request.setAttribute(
+                            "foodName",
+                            escapeHtml(foodName)
+                    );
 
-            response.sendRedirect("login.html");
+                    request.setAttribute(
+                            "quantity",
+                            quantity
+                    );
 
-            *return*;
+                    request.setAttribute(
+                            "status",
+                            escapeHtml(status)
+                    );
 
-        }
+                    // Send GPS information to JSP
+                    if (latitude != null &&
+                            longitude != null) {
 
-        *Integer* userId =
+                        request.setAttribute(
+                                "deliveryLatitude",
+                                latitude
+                        );
 
-                (Integer) session.getAttribute("userId");
+                        request.setAttribute(
+                                "deliveryLongitude",
+                                longitude
+                        );
 
+                        request.setAttribute(
+                                "locationMessage",
+                                "Delivery location available 📍"
+                        );
 
+                    } else {
 
-        *// =========================================*
+                        request.setAttribute(
+                                "deliveryLatitude",
+                                null
+                        );
 
-        *// GET ORDER ID*
+                        request.setAttribute(
+                                "deliveryLongitude",
+                                null
+                        );
 
-        *// =========================================*
+                        request.setAttribute(
+                                "locationMessage",
+                                "Waiting for delivery location..."
+                        );
+                    }
 
-        *String* orderIdText =
+                    // Status CSS class
+                    String statusClass = "status-default";
 
-                request.getParameter("orderId");
+                    if ("Order Placed".equalsIgnoreCase(status)) {
 
-        *if* (orderIdText == null ||
+                        statusClass = "status-placed";
 
-                orderIdText.trim().isEmpty()) {
+                    } else if ("Preparing".equalsIgnoreCase(status)) {
 
-            response.sendError(
+                        statusClass = "status-preparing";
 
-                    HttpServletResponse.SC\_BAD\_REQUEST,
+                    } else if ("Out for Delivery".equalsIgnoreCase(status)) {
 
-                    "Order ID is missing."
+                        statusClass = "status-delivery";
 
-            );
+                    } else if ("Delivered".equalsIgnoreCase(status)) {
 
-            *return*;
+                        statusClass = "status-delivered";
+                    }
 
-        }
+                    request.setAttribute(
+                            "statusClass",
+                            statusClass
+                    );
 
+                    // Open tracking JSP
+                    RequestDispatcher dispatcher =
+                            request.getRequestDispatcher(
+                                    "/track-order.jsp"
+                            );
 
+                    dispatcher.forward(
+                            request,
+                            response
+                    );
+                }
+            }
 
-        *int* orderId;
+        } catch (Exception e) {
 
-        *try* {
+            e.printStackTrace();
 
-            orderId =
+            response.sendError(
+                    HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    "Unable to load order"
+            );
+        }
+    }
 
-                    Integer.parseInt(orderIdText);
+    private String escapeHtml(String text) {
 
-        } *catch* (*NumberFormatException* e) {
+        if (text == null) {
+            return "";
+        }
 
-            response.sendError(
-
-                    HttpServletResponse.SC\_BAD\_REQUEST,
-
-                    "Invalid Order ID."
-
-            );
-
-            *return*;
-
-        }
-
-
-
-        *// =========================================*
-
-        *// DATABASE DETAILS*
-
-        *// =========================================*
-
-        *String* url =
-
-                System.getenv("DB\_URL");
-
-        *String* username =
-
-                System.getenv("DB\_USERNAME");
-
-        *String* password =
-
-                System.getenv("DB\_PASSWORD");
-
-
-
-        *if* (url == null ||
-
-                username == null ||
-
-                password == null) {
-
-            response.sendError(
-
-                    HttpServletResponse.SC\_INTERNAL\_SERVER\_ERROR,
-
-                    "Database configuration is missing."
-
-            );
-
-            *return*;
-
-        }
-
-
-
-        *if* (url.startsWith("mysql://")) {
-
-            url = "jdbc:" + url;
-
-        }
-
-
-
-        *// =========================================*
-
-        *// SQL*
-
-        *// =========================================*
-
-        *String* sql = """
-
-                SELECT
-
-                    id,
-
-                    customer\_name,
-
-                    food\_name,
-
-                    quantity,
-
-                    status,
-
-                    delivery\_latitude,
-
-                    delivery\_longitude
-
-                FROM orders
-
-                WHERE id = ?
-
-                AND user\_id = ?
-
-                """;
-
-
-
-        *// =========================================*
-
-        *// DATABASE*
-
-        *// =========================================*
-
-        *try* {
-
-            Class.forName(
-
-                    "com.mysql.cj.jdbc.Driver"
-
-            );
-
-
-
-            *try* (
-
-                *Connection* con =
-
-                        DriverManager.getConnection(
-
-                                url,
-
-                                username,
-
-                                password
-
-                        );
-
-                *PreparedStatement* ps =
-
-                        con.prepareStatement(sql)
-
-            ) {
-
-                ps.setInt(1, orderId);
-
-                ps.setInt(2, userId);
-
-
-
-                *try* (*ResultSet* rs =
-
-                             ps.executeQuery()) {
-
-
-
-                    *// =========================================*
-
-                    *// ORDER NOT FOUND*
-
-                    *// =========================================*
-
-                    *if* (!rs.next()) {
-
-                        response.sendError(
-
-                                HttpServletResponse.SC\_NOT\_FOUND,
-
-                                "Order not found."
-
-                        );
-
-                        *return*;
-
-                    }
-
-
-
-                    *// =========================================*
-
-                    *// GET ORDER DATA*
-
-                    *// =========================================*
-
-                    *String* customerName =
-
-                            rs.getString(
-
-                                    "customer\_name"
-
-                            );
-
-                    *String* foodName =
-
-                            rs.getString(
-
-                                    "food\_name"
-
-                            );
-
-                    *int* quantity =
-
-                            rs.getInt(
-
-                                    "quantity"
-
-                            );
-
-                    *String* status =
-
-                            rs.getString(
-
-                                    "status"
-
-                            );
-
-
-
-                    *Double* deliveryLatitude =
-
-                            (Double) rs.getObject(
-
-                                    "delivery\_latitude"
-
-                            );
-
-                    *Double* deliveryLongitude =
-
-                            (Double) rs.getObject(
-
-                                    "delivery\_longitude"
-
-                            );
-
-
-
-                    *// =========================================*
-
-                    *// SEND DATA TO JSP*
-
-                    *// =========================================*
-
-                    request.setAttribute(
-
-                            "orderId",
-
-                            orderId
-
-                    );
-
-                    request.setAttribute(
-
-                            "customerName",
-
-                            escapeHtml(customerName)
-
-                    );
-
-                    request.setAttribute(
-
-                            "foodName",
-
-                            escapeHtml(foodName)
-
-                    );
-
-                    request.setAttribute(
-
-                            "quantity",
-
-                            quantity
-
-                    );
-
-                    request.setAttribute(
-
-                            "status",
-
-                            escapeHtml(status)
-
-                    );
-
-
-
-                    *// =========================================*
-
-                    *// LOCATION DATA*
-
-                    *// =========================================*
-
-                    *if* (deliveryLatitude != null &&
-
-                            deliveryLongitude != null) {
-
-                        request.setAttribute(
-
-                                "deliveryLatitude",
-
-                                deliveryLatitude
-
-                        );
-
-                        request.setAttribute(
-
-                                "deliveryLongitude",
-
-                                deliveryLongitude
-
-                        );
-
-                        request.setAttribute(
-
-                                "locationMessage",
-
-                                "Delivery location available 📍"
-
-                        );
-
-                    } *else* {
-
-                        request.setAttribute(
-
-                                "deliveryLatitude",
-
-                                "null"
-
-                        );
-
-                        request.setAttribute(
-
-                                "deliveryLongitude",
-
-                                "null"
-
-                        );
-
-                        request.setAttribute(
-
-                                "locationMessage",
-
-                                "Waiting for delivery location... 📍"
-
-                        );
-
-                    }
-
-
-
-                    *// =========================================*
-
-                    *// ORDER STATUS CLASSES*
-
-                    *// =========================================*
-
-                    request.setAttribute(
-
-                            "orderPlacedClass",
-
-                            getActiveClass(
-
-                                    status,
-
-                                    "Order Placed"
-
-                            )
-
-                    );
-
-                    request.setAttribute(
-
-                            "preparingClass",
-
-                            getActiveClass(
-
-                                    status,
-
-                                    "Preparing"
-
-                            )
-
-                    );
-
-                    request.setAttribute(
-
-                            "outForDeliveryClass",
-
-                            getActiveClass(
-
-                                    status,
-
-                                    "Out for Delivery"
-
-                            )
-
-                    );
-
-                    request.setAttribute(
-
-                            "deliveredClass",
-
-                            getActiveClass(
-
-                                    status,
-
-                                    "Delivered"
-
-                            )
-
-                    );
-
-
-
-                    *// =========================================*
-
-                    *// OPEN JSP PAGE*
-
-                    *// =========================================*
-
-                    request.getRequestDispatcher(
-
-                            "/track-order.jsp"
-
-                    ).forward(
-
-                            request,
-
-                            response
-
-                    );
-
-                }
-
-            }
-
-        } *catch* (*Exception* e) {
-
-            e.printStackTrace();
-
-            response.sendError(
-
-                    HttpServletResponse.SC\_INTERNAL\_SERVER\_ERROR,
-
-                    "Something went wrong."
-
-            );
-
-        }
-
-    }
-
-
-
-    *// =========================================*
-
-    *// DETERMINE ACTIVE STEP*
-
-    *// =========================================*
-
-    private *String* getActiveClass(
-
-            *String* currentStatus,
-
-            *String* stepStatus) {
-
-        *int* currentIndex =
-
-                getStatusIndex(currentStatus);
-
-        *int* stepIndex =
-
-                getStatusIndex(stepStatus);
-
-
-
-        *if* (stepIndex <= currentIndex) {
-
-            *return* "active";
-
-        }
-
-        *return* "";
-
-    }
-
-
-
-    private *int* getStatusIndex(
-
-            *String* status) {
-
-        *if* ("Preparing".equals(status)) {
-
-            *return* 1;
-
-        }
-
-        *if* ("Out for Delivery".equals(status)) {
-
-            *return* 2;
-
-        }
-
-        *if* ("Delivered".equals(status)) {
-
-            *return* 3;
-
-        }
-
-        *return* 0;
-
-    }
-
-
-
-    *// =========================================*
-
-    *// HTML ESCAPE*
-
-    *// =========================================*
-
-    private *String* escapeHtml(*String* text) {
-
-        *if* (text == null) {
-
-            *return* "";
-
-        }
-
-        *return* text
-
-                .replace("&", "&amp;")
-
-                .replace("<", "&lt;")
-
-                .replace(">", "&gt;")
-
-                .replace("\\"", "&quot;")
-
-                .replace("'", "&#39;");
-
-    }
-
+        return text
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
 }
