@@ -581,7 +581,7 @@
                    class="btn primary">
                     Order Food
                 </a>
-<a href="OrderHistoryServlet">📦 My Order History</a>
+<a href="OrderHistoryServlet" class="btn primary"> My Order History</a>
             </div>
 
         </div>
