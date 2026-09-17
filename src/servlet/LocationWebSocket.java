@@ -4,7 +4,6 @@ import jakarta.websocket.OnOpen;
 import jakarta.websocket.Session;
 import jakarta.websocket.server.ServerEndpoint;
 
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -14,34 +13,64 @@ public class LocationWebSocket {
 
     @OnOpen
     public void onOpen(Session session) {
+
         System.out.println("WebSocket connected");
+
     }
+
 
     @OnMessage
     public void onMessage(String message, Session session) {
 
-        System.out.println("Location received: " + message);
+        System.out.println(
+            "Location received: " + message
+        );
 
         try {
 
             // Expected:
             // {"orderId":"201","latitude":16.123,"longitude":81.456}
 
-            String orderIdText = getValue(message, "orderId");
-            String latitudeText = getValue(message, "latitude");
-            String longitudeText = getValue(message, "longitude");
+            String orderIdText =
+                getValue(message, "orderId");
 
-            int orderId = Integer.parseInt(orderIdText);
-            double latitude = Double.parseDouble(latitudeText);
-            double longitude = Double.parseDouble(longitudeText);
+            String latitudeText =
+                getValue(message, "latitude");
 
-            String url = System.getenv("DB_URL");
-            String username = System.getenv("DB_USERNAME");
-            String password = System.getenv("DB_PASSWORD");
+            String longitudeText =
+                getValue(message, "longitude");
+
+
+            int orderId =
+                Integer.parseInt(orderIdText);
+
+            double latitude =
+                Double.parseDouble(latitudeText);
+
+            double longitude =
+                Double.parseDouble(longitudeText);
+
+
+            // =========================================
+            // DATABASE
+            // =========================================
+
+            String url =
+                System.getenv("DB_URL");
+
+            String username =
+                System.getenv("DB_USERNAME");
+
+            String password =
+                System.getenv("DB_PASSWORD");
+
 
             if (url.startsWith("mysql://")) {
+
                 url = "jdbc:" + url;
+
             }
+
 
             String sql = """
                 UPDATE orders
@@ -51,88 +80,155 @@ public class LocationWebSocket {
                 WHERE id = ?
                 """;
 
+
             try (
-                Connection con = DriverManager.getConnection(
-                    url, username, password
-                );
-                PreparedStatement ps = con.prepareStatement(sql)
+                Connection con =
+                    DriverManager.getConnection(
+                        url,
+                        username,
+                        password
+                    );
+
+                PreparedStatement ps =
+                    con.prepareStatement(sql)
             ) {
 
                 ps.setDouble(1, latitude);
+
                 ps.setDouble(2, longitude);
+
                 ps.setInt(3, orderId);
 
-                int rows = ps.executeUpdate();
+
+                int rows =
+                    ps.executeUpdate();
+
 
                 if (rows > 0) {
 
                     System.out.println(
-                        "Location saved for order " + orderId
+                        "Location saved for order "
+                        + orderId
                     );
 
-                    // Send location to all connected customers
-                    for (Session connectedSession : session.getOpenSessions()) {
 
-                        if (connectedSession.isOpen()) {
+                    // =========================================
+                    // SEND LOCATION TO CONNECTED CLIENTS
+                    // =========================================
 
-                            connectedSession.getBasicRemote().sendText(message);
+                    for (
+                        Session connectedSession :
+                        session.getOpenSessions()
+                    ) {
 
+                        if (
+                            connectedSession.isOpen()
+                        ) {
+
+                            try {
+
+                                connectedSession
+                                    .getBasicRemote()
+                                    .sendText(message);
+
+                            } catch (Exception sendError) {
+
+                                sendError.printStackTrace();
+
+                            }
                         }
                     }
 
                 } else {
 
                     System.out.println(
-                        "Order not found: " + orderId
+                        "Order not found: "
+                        + orderId
                     );
+
                 }
             }
 
         } catch (Exception e) {
+
             e.printStackTrace();
+
         }
     }
 
-    private String getValue(String json, String key) {
 
-        String search = "\"" + key + "\":";
+    // =========================================
+    // SIMPLE JSON VALUE READER
+    // =========================================
 
-        int start = json.indexOf(search);
+    private String getValue(
+            String json,
+            String key) {
+
+        String search =
+            "\"" + key + "\":";
+
+        int start =
+            json.indexOf(search);
+
 
         if (start == -1) {
+
             throw new IllegalArgumentException(
                 "Missing field: " + key
             );
+
         }
+
 
         start += search.length();
 
+
         while (
             start < json.length()
-            && (
+            &&
+            (
                 json.charAt(start) == ' '
-                || json.charAt(start) == '"'
+                ||
+                json.charAt(start) == '"'
             )
         ) {
+
             start++;
+
         }
+
 
         int end = start;
 
+
         while (
             end < json.length()
-            && json.charAt(end) != ','
-            && json.charAt(end) != '}'
-            && json.charAt(end) != '"'
+            &&
+            json.charAt(end) != ','
+            &&
+            json.charAt(end) != '}'
+            &&
+            json.charAt(end) != '"'
         ) {
+
             end++;
+
         }
 
-        return json.substring(start, end).trim();
+
+        return json
+            .substring(start, end)
+            .trim();
     }
+
 
     @OnClose
     public void onClose(Session session) {
-        System.out.println("WebSocket disconnected");
+
+        System.out.println(
+            "WebSocket disconnected"
+        );
+
     }
 }

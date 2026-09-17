@@ -112,18 +112,19 @@ public class TrackOrderServlet extends HttpServlet {
         // =========================================
 
         String sql = """
-        SELECT
-            id,
-            customer_name,
-            food_name,
-            quantity,
-            status,
-            delivery_latitude,
-            delivery_longitude
-        FROM orders
-        WHERE id = ?
-        AND user_id = ?
-        """;
+                SELECT
+                    id,
+                    customer_name,
+                    food_name,
+                    quantity,
+                    status,
+                    delivery_latitude,
+                    delivery_longitude
+                FROM orders
+                WHERE id = ?
+                AND user_id = ?
+                """;
+
 
         try {
 
@@ -144,16 +145,23 @@ public class TrackOrderServlet extends HttpServlet {
                 ps.setInt(1, orderId);
                 ps.setInt(2, userId);
 
+
                 try (ResultSet rs = ps.executeQuery()) {
+
+                    // =========================================
+                    // ORDER NOT FOUND
+                    // =========================================
 
                     if (!rs.next()) {
 
                         out.println("""
                                 <h2>Order not found.</h2>
+
                                 <p>
                                     This order does not belong
                                     to your account.
                                 </p>
+
                                 <a href="index.html">
                                     Back to Home
                                 </a>
@@ -179,22 +187,36 @@ public class TrackOrderServlet extends HttpServlet {
                     String status =
                             rs.getString("status");
 
-Double deliveryLatitude =
-        (Double) rs.getObject("delivery_latitude");
+                    Double deliveryLatitude =
+                            (Double) rs.getObject(
+                                    "delivery_latitude");
 
-Double deliveryLongitude =
-        (Double) rs.getObject("delivery_longitude");
+                    Double deliveryLongitude =
+                            (Double) rs.getObject(
+                                    "delivery_longitude");
+
+
                     // =========================================
                     // TRACKING PAGE
                     // =========================================
 
                     out.println("""
                             <!DOCTYPE html>
+
                             <html>
 
                             <head>
 
+                                <meta charset="UTF-8">
+
                                 <title>Track Order</title>
+
+                                <!-- Leaflet CSS -->
+
+                                <link
+                                    rel="stylesheet"
+                                    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+                                >
 
                                 <style>
 
@@ -227,6 +249,27 @@ Double deliveryLongitude =
                                         background: #fff3e8;
                                         border-radius: 10px;
                                     }
+
+                                    /* =================================
+                                       LIVE MAP
+                                       ================================= */
+
+                                    #map {
+                                        width: 100%;
+                                        height: 400px;
+                                        margin-top: 25px;
+                                        border-radius: 12px;
+                                        overflow: hidden;
+                                    }
+
+                                    #locationStatus {
+                                        margin-top: 10px;
+                                        font-size: 14px;
+                                    }
+
+                                    /* =================================
+                                       ORDER STEPS
+                                       ================================= */
 
                                     .steps {
                                         display: flex;
@@ -274,90 +317,386 @@ Double deliveryLongitude =
 
                             </head>
 
+
                             <body>
 
                                 <div class="container">
 
                                     <h1>📦 Track Your Order</h1>
 
+
+                                    <!-- =================================
+                                         ORDER INFORMATION
+                                         ================================= -->
+
                                     <div class="order-info">
 
                                         <p>
                                             <strong>Order ID:</strong>
-                                            """ + orderId + """
+                            """ + orderId + """
                                         </p>
 
                                         <p>
                                             <strong>Customer:</strong>
-                                            """ + escapeHtml(customerName) + """
+                            """ + escapeHtml(customerName) + """
                                         </p>
 
                                         <p>
                                             <strong>Food:</strong>
-                                            """ + escapeHtml(foodName) + """
+                            """ + escapeHtml(foodName) + """
                                         </p>
 
                                         <p>
                                             <strong>Quantity:</strong>
-                                            """ + quantity + """
+                            """ + quantity + """
                                         </p>
 
                                         <p>
                                             <strong>Current Status:</strong>
-                                            """ + escapeHtml(status) + """
+                            """ + escapeHtml(status) + """
                                         </p>
 
                                     </div>
 
+
+                                    <!-- =================================
+                                         LIVE MAP
+                                         ================================= -->
+
+                                    <div id="map"></div>
+
+                                    <p id="locationStatus">
+                            """);
+
+                    if (deliveryLatitude != null &&
+                            deliveryLongitude != null) {
+
+                        out.println(
+                            "Delivery location available 📍"
+                        );
+
+                    } else {
+
+                        out.println(
+                            "Waiting for delivery location... 📍"
+                        );
+                    }
+
+                    out.println("""
+                                    </p>
+
+
+                                    <!-- =================================
+                                         ORDER PROGRESS
+                                         ================================= -->
+
                                     <div class="steps">
 
                                         <div class="step">
+
                                             <div class="circle
-                            """ + getActiveClass(status, "Order Placed") + """
+                            """ + getActiveClass(
+                                    status,
+                                    "Order Placed") + """
                                             ">
                                                 ✓
                                             </div>
+
                                             <p>Order Placed</p>
+
                                         </div>
 
 
                                         <div class="step">
+
                                             <div class="circle
-                            """ + getActiveClass(status, "Preparing") + """
+                            """ + getActiveClass(
+                                    status,
+                                    "Preparing") + """
                                             ">
                                                 ✓
                                             </div>
+
                                             <p>Preparing</p>
+
                                         </div>
 
 
                                         <div class="step">
+
                                             <div class="circle
-                            """ + getActiveClass(status, "Out for Delivery") + """
+                            """ + getActiveClass(
+                                    status,
+                                    "Out for Delivery") + """
                                             ">
                                                 ✓
                                             </div>
+
                                             <p>Out for Delivery</p>
+
                                         </div>
 
 
                                         <div class="step">
+
                                             <div class="circle
-                            """ + getActiveClass(status, "Delivered") + """
+                            """ + getActiveClass(
+                                    status,
+                                    "Delivered") + """
                                             ">
                                                 ✓
                                             </div>
+
                                             <p>Delivered</p>
+
                                         </div>
 
                                     </div>
 
-                                    <a href="index.html"
-                                       class="home-btn">
+
+                                    <a
+                                        href="index.html"
+                                        class="home-btn"
+                                    >
                                         ← Back to Home
                                     </a>
 
                                 </div>
+
+
+                                <!-- =================================
+                                     LEAFLET JAVASCRIPT
+                                     ================================= -->
+
+                                <script
+                                    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+                                </script>
+
+
+                                <script>
+
+                                    // Current order ID
+
+                                    const orderId = """ + orderId + """;
+
+
+                                    // =================================
+                                    // CREATE MAP
+                                    // =================================
+
+                                    const map =
+                                        L.map("map").setView(
+                                            [16.5, 80.6],
+                                            7
+                                        );
+
+
+                                    // OpenStreetMap
+
+                                    L.tileLayer(
+                                        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                                        {
+                                            attribution:
+                                                "&copy; OpenStreetMap contributors"
+                                        }
+                                    ).addTo(map);
+
+
+                                    let deliveryMarker = null;
+
+
+                                    const locationStatus =
+                                        document.getElementById(
+                                            "locationStatus"
+                                        );
+
+
+                                    // =================================
+                                    // SHOW EXISTING LOCATION
+                                    // =================================
+
+                                    const existingLatitude =
+                            """ + (deliveryLatitude != null
+                                    ? deliveryLatitude
+                                    : "null") + """;
+
+                                    const existingLongitude =
+                            """ + (deliveryLongitude != null
+                                    ? deliveryLongitude
+                                    : "null") + """;
+
+
+                                    if (
+                                        existingLatitude !== null &&
+                                        existingLongitude !== null
+                                    ) {
+
+                                        const position = [
+                                            existingLatitude,
+                                            existingLongitude
+                                        ];
+
+
+                                        deliveryMarker =
+                                            L.marker(position)
+                                                .addTo(map)
+                                                .bindPopup(
+                                                    "🚚 Delivery Location"
+                                                );
+
+
+                                        map.setView(
+                                            position,
+                                            15
+                                        );
+                                    }
+
+
+                                    // =================================
+                                    // WEBSOCKET
+                                    // =================================
+
+                                    const protocol =
+                                        location.protocol === "https:"
+                                            ? "wss://"
+                                            : "ws://";
+
+
+                                    const socket =
+                                        new WebSocket(
+                                            protocol +
+                                            location.host +
+                                            "/location"
+                                        );
+
+
+                                    socket.onopen = function () {
+
+                                        console.log(
+                                            "Tracking WebSocket connected"
+                                        );
+
+                                    };
+
+
+                                    socket.onmessage =
+                                        function(event) {
+
+                                            try {
+
+                                                const data =
+                                                    JSON.parse(
+                                                        event.data
+                                                    );
+
+
+                                                // Ignore other orders
+
+                                                if (
+                                                    String(data.orderId)
+                                                    !==
+                                                    String(orderId)
+                                                ) {
+
+                                                    return;
+                                                }
+
+
+                                                const latitude =
+                                                    parseFloat(
+                                                        data.latitude
+                                                    );
+
+
+                                                const longitude =
+                                                    parseFloat(
+                                                        data.longitude
+                                                    );
+
+
+                                                if (
+                                                    isNaN(latitude) ||
+                                                    isNaN(longitude)
+                                                ) {
+
+                                                    return;
+                                                }
+
+
+                                                const position = [
+                                                    latitude,
+                                                    longitude
+                                                ];
+
+
+                                                // First location
+
+                                                if (
+                                                    deliveryMarker
+                                                    === null
+                                                ) {
+
+                                                    deliveryMarker =
+                                                        L.marker(
+                                                            position
+                                                        )
+                                                        .addTo(map)
+                                                        .bindPopup(
+                                                            "🚚 Delivery Location"
+                                                        );
+
+
+                                                    map.setView(
+                                                        position,
+                                                        15
+                                                    );
+
+                                                }
+
+                                                // Move existing marker
+
+                                                else {
+
+                                                    deliveryMarker
+                                                        .setLatLng(
+                                                            position
+                                                        );
+                                                }
+
+
+                                                locationStatus.innerText =
+                                                    "Delivery location updated 📍";
+
+                                            }
+
+                                            catch (error) {
+
+                                                console.log(
+                                                    "Location message error:",
+                                                    error
+                                                );
+                                            }
+
+                                        };
+
+
+                                    socket.onclose = function () {
+
+                                        locationStatus.innerText =
+                                            "Live tracking disconnected ❌";
+
+                                    };
+
+
+                                    socket.onerror = function () {
+
+                                        locationStatus.innerText =
+                                            "Live tracking connection error ❌";
+
+                                    };
+
+                                </script>
+
 
                             </body>
 
@@ -372,6 +711,7 @@ Double deliveryLongitude =
 
             out.println("""
                     <h2>Something went wrong.</h2>
+
                     <p>
                     """ + escapeHtml(e.getMessage()) + """
                     </p>
@@ -395,8 +735,11 @@ Double deliveryLongitude =
             "Delivered"
         };
 
-        int currentIndex = getStatusIndex(currentStatus);
-        int stepIndex = getStatusIndex(stepStatus);
+        int currentIndex =
+                getStatusIndex(currentStatus);
+
+        int stepIndex =
+                getStatusIndex(stepStatus);
 
         if (stepIndex <= currentIndex) {
             return " active";
