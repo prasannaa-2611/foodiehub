@@ -5,195 +5,956 @@
 
     <meta charset="UTF-8">
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-    <title>FoodieHub - Delicious Food</title>
+    <title>FoodieHub - Delicious Food Delivered</title>
 
     <style>
 
+        /* =========================
+           COLOR PALETTE
+        ========================= */
+
+        :root {
+            --cream: #fffaf3;
+            --cream-dark: #f8eee2;
+            --peach: #f6d8c0;
+            --peach-light: #fdf0e5;
+            --terracotta: #d96b3a;
+            --terracotta-dark: #bd5630;
+            --brown: #3b2922;
+            --brown-light: #684b3e;
+            --text: #332722;
+            --muted: #806f66;
+            --white: #ffffff;
+        }
+
+
+        /* =========================
+           RESET
+        ========================= */
+
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
         }
 
         body {
-            font-family: Arial, sans-serif;
-            background: #fffaf5;
-            color: #222;
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--cream);
+            color: var(--text);
+            overflow-x: hidden;
         }
 
-        /* ================= NAVBAR ================= */
+
+        /* =========================
+           NAVBAR
+        ========================= */
 
         nav {
-            height: 70px;
-            background: white;
+            position: fixed;
+            top: 0;
+            left: 0;
+
+            width: 100%;
+            height: 75px;
+
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 8%;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+
+            padding: 0 7%;
+
+            background: rgba(255, 250, 243, 0.95);
+
+            backdrop-filter: blur(12px);
+
+            border-bottom: 1px solid rgba(59, 41, 34, 0.06);
+
+            box-shadow:
+                0 4px 20px rgba(59, 41, 34, 0.06);
+
+            z-index: 1000;
         }
 
         .logo {
-            font-size: 26px;
-            font-weight: bold;
+            font-size: 28px;
+
+            font-weight: 800;
+
+            color: var(--terracotta);
+
+            text-decoration: none;
         }
 
         .logo span {
-            color: #ff6b00;
+            color: var(--brown);
         }
 
-        nav a {
-            text-decoration: none;
-            color: #333;
-            margin-left: 25px;
-            font-weight: 500;
-        }
-
-        nav a:hover {
-            color: #ff6b00;
-        }
-
-        .order-btn {
-            background: #ff6b00;
-            color: white !important;
-            padding: 12px 20px;
-            border-radius: 25px;
-        }
-
-
-        /* ================= HERO ================= */
-
-        .hero {
-            min-height: 260px;
+        .nav-links {
             display: flex;
             align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 40px 20px;
+            gap: 28px;
+        }
 
-            background: linear-gradient(
-                135deg,
-                #fff0df,
-                #fffaf5
-            );
+        .nav-links a {
+            text-decoration: none;
+
+            color: var(--brown-light);
+
+            font-size: 15px;
+
+            font-weight: 600;
+
+            position: relative;
+
+            transition: 0.3s;
+        }
+
+        .nav-links a:not(.nav-order)::after {
+            content: "";
+
+            position: absolute;
+
+            left: 0;
+            bottom: -7px;
+
+            width: 0;
+            height: 2px;
+
+            background: var(--terracotta);
+
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--terracotta);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-order {
+            background: var(--terracotta);
+
+            color: white !important;
+
+            padding: 11px 20px;
+
+            border-radius: 25px;
+
+            box-shadow:
+                0 7px 18px rgba(217, 107, 58, 0.22);
+
+            transition: 0.3s;
+        }
+
+        .nav-order:hover {
+            transform: translateY(-3px);
+
+            background: var(--terracotta-dark);
+
+            box-shadow:
+                0 10px 23px rgba(217, 107, 58, 0.3);
+        }
+
+
+        /* =========================
+           HERO
+        ========================= */
+
+        .hero {
+            min-height: 100vh;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding: 120px 8% 70px;
+
+            position: relative;
+
+            overflow: hidden;
+
+            background:
+                radial-gradient(
+                    circle at 82% 25%,
+                    var(--peach) 0%,
+                    var(--peach-light) 28%,
+                    var(--cream) 65%
+                );
+        }
+
+        .hero::before {
+            content: "";
+
+            position: absolute;
+
+            width: 350px;
+            height: 350px;
+
+            border-radius: 50%;
+
+            background: rgba(217, 107, 58, 0.06);
+
+            top: -130px;
+            left: -100px;
+        }
+
+        .hero-content {
+            max-width: 600px;
+
+            position: relative;
+            z-index: 2;
+
+            animation:
+                slideLeft 1s ease forwards;
+        }
+
+        .small-text {
+            display: inline-block;
+
+            background: var(--peach-light);
+
+            color: var(--terracotta);
+
+            padding: 9px 17px;
+
+            border-radius: 30px;
+
+            font-size: 14px;
+
+            font-weight: bold;
+
+            margin-bottom: 22px;
+
+            border: 1px solid rgba(217, 107, 58, 0.12);
+
+            animation:
+                fadeDown 0.8s ease;
         }
 
         .hero h1 {
-            font-size: 48px;
-            margin-bottom: 15px;
+            font-size: clamp(45px, 6vw, 75px);
+
+            line-height: 1.05;
+
+            margin-bottom: 22px;
+
+            color: var(--brown);
         }
 
         .hero h1 span {
-            color: #ff6b00;
+            color: var(--terracotta);
         }
 
         .hero p {
-            font-size: 20px;
-            color: #666;
-            margin-bottom: 10px;
+            font-size: 18px;
+
+            line-height: 1.7;
+
+            color: var(--muted);
+
+            max-width: 520px;
+
+            margin-bottom: 32px;
         }
 
 
-        /* ================= MENU ================= */
+        /* =========================
+           HERO BUTTONS
+        ========================= */
 
-        .menu-section {
-            padding: 50px 8%;
-            text-align: center;
+        .hero-buttons {
+            display: flex;
+
+            gap: 15px;
+
+            flex-wrap: wrap;
         }
 
-        .menu-section h2 {
-            font-size: 34px;
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            color: #777;
-            margin-bottom: 25px;
-        }
-
-
-        /* ================= VIEW MENU BUTTON ================= */
-
-        .view-menu-btn {
+        .primary-btn {
             display: inline-block;
-
-            background: #ff6b00;
-            color: white;
 
             text-decoration: none;
 
-            padding: 13px 28px;
+            background: var(--terracotta);
 
-            border-radius: 25px;
+            color: white;
+
+            padding: 15px 28px;
+
+            border-radius: 30px;
+
+            font-weight: bold;
+
+            box-shadow:
+                0 8px 20px rgba(217, 107, 58, 0.24);
+
+            transition: 0.3s;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-4px) scale(1.03);
+
+            background: var(--terracotta-dark);
+
+            box-shadow:
+                0 12px 28px rgba(217, 107, 58, 0.32);
+        }
+
+        .secondary-btn {
+            display: inline-block;
+
+            text-decoration: none;
+
+            color: var(--terracotta);
+
+            background: transparent;
+
+            border: 2px solid var(--terracotta);
+
+            padding: 13px 27px;
+
+            border-radius: 30px;
 
             font-weight: bold;
 
             transition: 0.3s;
         }
 
-        .view-menu-btn:hover {
-            background: #e65c00;
+        .secondary-btn:hover {
+            background: var(--terracotta);
+
+            color: white;
+
+            transform: translateY(-4px);
         }
 
 
-        /* ================= FOOTER ================= */
+        /* =========================
+           STATS
+        ========================= */
+
+        .stats {
+            display: flex;
+
+            gap: 45px;
+
+            margin-top: 45px;
+        }
+
+        .stat h3 {
+            font-size: 25px;
+
+            color: var(--brown);
+        }
+
+        .stat p {
+            font-size: 13px;
+
+            color: var(--muted);
+
+            margin-top: 4px;
+        }
+
+
+        /* =========================
+           HERO FOOD
+        ========================= */
+
+        .hero-image {
+            width: 45%;
+
+            min-width: 350px;
+
+            height: 480px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            position: relative;
+
+            animation:
+                slideRight 1s ease forwards;
+        }
+
+        .food-circle {
+            width: 390px;
+            height: 390px;
+
+            border-radius: 50%;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #e99a70,
+                    var(--terracotta)
+                );
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            box-shadow:
+                0 25px 60px
+                rgba(217, 107, 58, 0.22);
+
+            animation:
+                floatFood 4s ease-in-out infinite;
+        }
+
+        .food-emoji {
+            font-size: 210px;
+
+            filter:
+                drop-shadow(
+                    0 15px 15px
+                    rgba(59, 41, 34, 0.18)
+                );
+        }
+
+        .floating-item {
+            position: absolute;
+
+            font-size: 42px;
+
+            animation:
+                floating 3s ease-in-out infinite;
+        }
+
+        .item-one {
+            top: 50px;
+            left: 10%;
+        }
+
+        .item-two {
+            bottom: 55px;
+            right: 8%;
+
+            animation-delay: 1s;
+        }
+
+        .item-three {
+            top: 90px;
+            right: 3%;
+
+            font-size: 30px;
+
+            animation-delay: 1.7s;
+        }
+
+        .item-four {
+            bottom: 120px;
+            left: 2%;
+
+            font-size: 32px;
+
+            animation-delay: 0.5s;
+        }
+
+
+        /* =========================
+           WHY SECTION
+        ========================= */
+
+        .why-section {
+            padding: 100px 8%;
+
+            background: var(--cream-dark);
+
+            text-align: center;
+        }
+
+        .section-label {
+            color: var(--terracotta);
+
+            font-weight: bold;
+
+            font-size: 14px;
+
+            text-transform: uppercase;
+
+            letter-spacing: 2px;
+
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 42px;
+
+            margin-bottom: 15px;
+
+            color: var(--brown);
+        }
+
+        .section-description {
+            color: var(--muted);
+
+            max-width: 600px;
+
+            margin: 0 auto 50px;
+
+            line-height: 1.7;
+        }
+
+        .features {
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 25px;
+
+            max-width: 1050px;
+
+            margin: auto;
+        }
+
+        .feature-card {
+            padding: 35px 25px;
+
+            background: var(--cream);
+
+            border-radius: 20px;
+
+            border: 1px solid #eadbce;
+
+            transition:
+                transform 0.35s,
+                box-shadow 0.35s;
+
+            opacity: 0;
+
+            animation:
+                cardAppear 0.8s ease forwards;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.15s;
+        }
+
+        .feature-card:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+
+            box-shadow:
+                0 18px 35px
+                rgba(59, 41, 34, 0.09);
+        }
+
+        .feature-icon {
+            width: 70px;
+            height: 70px;
+
+            margin: 0 auto 20px;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background: var(--peach-light);
+
+            font-size: 32px;
+        }
+
+        .feature-card h3 {
+            margin-bottom: 10px;
+
+            color: var(--brown);
+        }
+
+        .feature-card p {
+            color: var(--muted);
+
+            line-height: 1.6;
+
+            font-size: 14px;
+        }
+
+
+        /* =========================
+           MENU CTA
+        ========================= */
+
+        .menu-section {
+            padding: 100px 8%;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--peach),
+                    #f1c5a8
+                );
+
+            text-align: center;
+
+            position: relative;
+
+            overflow: hidden;
+        }
+
+        .menu-section::before {
+            content: "🍕";
+
+            position: absolute;
+
+            font-size: 170px;
+
+            left: -40px;
+            top: -40px;
+
+            opacity: 0.13;
+
+            transform: rotate(-20deg);
+        }
+
+        .menu-section::after {
+            content: "🍔";
+
+            position: absolute;
+
+            font-size: 160px;
+
+            right: -30px;
+            bottom: -40px;
+
+            opacity: 0.13;
+
+            transform: rotate(20deg);
+        }
+
+        .menu-section h2 {
+            color: var(--brown);
+
+            font-size: 45px;
+
+            margin-bottom: 15px;
+
+            position: relative;
+        }
+
+        .menu-section p {
+            color: var(--brown-light);
+
+            max-width: 600px;
+
+            margin: 0 auto 30px;
+
+            line-height: 1.7;
+
+            position: relative;
+        }
+
+        .menu-btn {
+            display: inline-block;
+
+            background: var(--terracotta);
+
+            color: white;
+
+            text-decoration: none;
+
+            padding: 15px 30px;
+
+            border-radius: 30px;
+
+            font-weight: bold;
+
+            position: relative;
+
+            transition: 0.3s;
+
+            box-shadow:
+                0 8px 20px
+                rgba(217, 107, 58, 0.22);
+        }
+
+        .menu-btn:hover {
+            transform: scale(1.07);
+
+            background: var(--terracotta-dark);
+
+            box-shadow:
+                0 12px 25px
+                rgba(217, 107, 58, 0.28);
+        }
+
+
+        /* =========================
+           FOOTER
+        ========================= */
 
         footer {
-            background: #222;
+            background: var(--brown);
+
             color: white;
+
             text-align: center;
-            padding: 25px;
-            margin-top: 30px;
+
+            padding: 38px 20px;
+        }
+
+        footer .footer-logo {
+            font-size: 25px;
+
+            font-weight: bold;
+
+            color: #f0a77f;
+
+            margin-bottom: 10px;
+        }
+
+        footer p {
+            color: #d7c4ba;
+
+            font-size: 13px;
         }
 
 
-        /* ================= TABLET ================= */
+        /* =========================
+           ANIMATIONS
+        ========================= */
 
-        @media (max-width: 900px) {
+        @keyframes slideLeft {
 
-            nav {
-                padding: 0 4%;
+            from {
+                opacity: 0;
+
+                transform:
+                    translateX(-60px);
             }
 
+            to {
+                opacity: 1;
+
+                transform:
+                    translateX(0);
+            }
+        }
+
+        @keyframes slideRight {
+
+            from {
+                opacity: 0;
+
+                transform:
+                    translateX(60px);
+            }
+
+            to {
+                opacity: 1;
+
+                transform:
+                    translateX(0);
+            }
+        }
+
+        @keyframes fadeDown {
+
+            from {
+                opacity: 0;
+
+                transform:
+                    translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+
+                transform:
+                    translateY(0);
+            }
+        }
+
+        @keyframes floatFood {
+
+            0%,
+            100% {
+                transform:
+                    translateY(0)
+                    rotate(0deg);
+            }
+
+            50% {
+                transform:
+                    translateY(-15px)
+                    rotate(3deg);
+            }
+        }
+
+        @keyframes floating {
+
+            0%,
+            100% {
+                transform:
+                    translateY(0)
+                    rotate(0deg);
+            }
+
+            50% {
+                transform:
+                    translateY(-18px)
+                    rotate(8deg);
+            }
+        }
+
+        @keyframes cardAppear {
+
+            from {
+                opacity: 0;
+
+                transform:
+                    translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+
+                transform:
+                    translateY(0);
+            }
         }
 
 
-        /* ================= MOBILE ================= */
+        /* =========================
+           RESPONSIVE
+        ========================= */
 
-        @media (max-width: 600px) {
+        @media (max-width: 850px) {
 
             nav {
-                height: auto;
-                padding: 20px;
-
-                flex-direction: column;
-
-                gap: 15px;
+                padding: 0 5%;
             }
 
-            nav a {
-                margin: 0 7px;
+            .nav-links {
+                gap: 12px;
+            }
+
+            .nav-links a {
+                font-size: 13px;
             }
 
             .hero {
-                min-height: 220px;
-                padding: 35px 20px;
+                flex-direction: column;
+
+                text-align: center;
+
+                padding-top: 130px;
             }
 
-            .hero h1 {
-                font-size: 34px;
+            .hero-content {
+                max-width: 700px;
             }
 
             .hero p {
-                font-size: 17px;
+                margin-left: auto;
+                margin-right: auto;
             }
 
-            .menu-section {
-                padding: 35px 6%;
+            .hero-buttons {
+                justify-content: center;
             }
 
+            .stats {
+                justify-content: center;
+            }
+
+            .hero-image {
+                width: 100%;
+
+                min-width: 0;
+
+                height: 400px;
+
+                margin-top: 30px;
+            }
+
+            .food-circle {
+                width: 300px;
+                height: 300px;
+            }
+
+            .food-emoji {
+                font-size: 160px;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+
+                max-width: 500px;
+            }
+        }
+
+
+        @media (max-width: 550px) {
+
+            nav {
+                height: auto;
+
+                padding: 15px 5%;
+
+                flex-direction: column;
+
+                gap: 12px;
+            }
+
+            .nav-links {
+                flex-wrap: wrap;
+
+                justify-content: center;
+            }
+
+            .hero {
+                padding-top: 160px;
+            }
+
+            .hero h1 {
+                font-size: 45px;
+            }
+
+            .stats {
+                gap: 22px;
+            }
+
+            .stat h3 {
+                font-size: 21px;
+            }
+
+            .food-circle {
+                width: 250px;
+                height: 250px;
+            }
+
+            .food-emoji {
+                font-size: 130px;
+            }
+
+            .section-title,
+            .menu-section h2 {
+                font-size: 34px;
+            }
         }
 
     </style>
@@ -204,15 +965,18 @@
 <body>
 
 
-    <!-- ================= NAVIGATION ================= -->
+    <!-- =========================
+         NAVIGATION
+    ========================= -->
 
     <nav>
 
-        <div class="logo">
+        <a href="index.html"
+           class="logo">
             Foodie<span>Hub</span>
-        </div>
+        </a>
 
-        <div>
+        <div class="nav-links">
 
             <a href="index.html">
                 Home
@@ -230,7 +994,8 @@
                 Login
             </a>
 
-            <a href="OrderPageServlet" class="order-btn">
+            <a href="OrderPageServlet"
+               class="nav-order">
                 Order Now
             </a>
 
@@ -239,50 +1004,243 @@
     </nav>
 
 
-    <!-- ================= HERO ================= -->
+    <!-- =========================
+         HERO
+    ========================= -->
 
     <section class="hero">
 
-        <div>
+
+        <div class="hero-content">
+
+            <div class="small-text">
+                🍴 Your food, your way
+            </div>
 
             <h1>
-                Welcome to
-                <span>FoodieHub</span>
+                Delicious food,
+                <br>
+                <span>delivered to you.</span>
             </h1>
 
             <p>
-                Delicious food, made with love and ready for you.
+                Discover your favorite meals, order with ease,
+                and enjoy delicious food from FoodieHub.
+                Your next meal is just a few clicks away.
             </p>
+
+
+            <div class="hero-buttons">
+
+                <a href="MenuServlet"
+                   class="primary-btn">
+                    🍽 Explore Menu
+                </a>
+
+                <a href="OrderPageServlet"
+                   class="secondary-btn">
+                    🛒 Order Now
+                </a>
+
+            </div>
+
+
+            <div class="stats">
+
+                <div class="stat">
+
+                    <h3>12+</h3>
+
+                    <p>
+                        Food Choices
+                    </p>
+
+                </div>
+
+
+                <div class="stat">
+
+                    <h3>Fast</h3>
+
+                    <p>
+                        Ordering
+                    </p>
+
+                </div>
+
+
+                <div class="stat">
+
+                    <h3>100%</h3>
+
+                    <p>
+                        Easy to Use
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- FOOD IMAGE -->
+
+        <div class="hero-image">
+
+            <div class="floating-item item-one">
+                🍕
+            </div>
+
+            <div class="floating-item item-two">
+                🍔
+            </div>
+
+            <div class="floating-item item-three">
+                🍟
+            </div>
+
+            <div class="floating-item item-four">
+                🥤
+            </div>
+
+
+            <div class="food-circle">
+
+                <div class="food-emoji">
+                    🍕
+                </div>
+
+            </div>
 
         </div>
 
     </section>
 
 
-    <!-- ================= MENU ================= -->
 
-    <section class="menu-section" id="menu">
+    <!-- =========================
+         WHY FOODIEHUB
+    ========================= -->
 
-        <h2>
-            Our Menu
+    <section class="why-section">
+
+        <div class="section-label">
+            Why FoodieHub?
+        </div>
+
+        <h2 class="section-title">
+            Everything you need for a better meal
         </h2>
 
-        <p class="subtitle">
-            Explore our delicious food collection
+        <p class="section-description">
+            FoodieHub makes the food ordering experience
+            simple, convenient and enjoyable.
         </p>
 
-        <a href="MenuServlet" class="view-menu-btn">
-            View Full Menu
+
+        <div class="features">
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    🍽️
+                </div>
+
+                <h3>
+                    Variety of Food
+                </h3>
+
+                <p>
+                    Choose from a variety of delicious
+                    dishes available on our menu.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    ⚡
+                </div>
+
+                <h3>
+                    Easy Ordering
+                </h3>
+
+                <p>
+                    Browse the menu, select your food
+                    and place your order with ease.
+                </p>
+
+            </div>
+
+
+            <div class="feature-card">
+
+                <div class="feature-icon">
+                    📍
+                </div>
+
+                <h3>
+                    Track Your Order
+                </h3>
+
+                <p>
+                    Keep track of your order and delivery
+                    information from one place.
+                </p>
+
+            </div>
+
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =========================
+         MENU SECTION
+    ========================= -->
+
+    <section class="menu-section">
+
+        <h2>
+            Hungry already?
+        </h2>
+
+        <p>
+            Explore our menu and find something
+            delicious for your next meal.
+        </p>
+
+        <a href="MenuServlet"
+           class="menu-btn">
+            View Full Menu →
         </a>
 
     </section>
 
 
-    <!-- ================= FOOTER ================= -->
+
+    <!-- =========================
+         FOOTER
+    ========================= -->
 
     <footer>
 
+        <div class="footer-logo">
+            FoodieHub 🍴
+        </div>
+
         <p>
+            Delicious food. Simple ordering.
+        </p>
+
+        <p style="margin-top: 10px;">
             © 2026 FoodieHub. All rights reserved.
         </p>
 
