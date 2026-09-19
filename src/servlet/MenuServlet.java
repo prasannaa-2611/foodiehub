@@ -182,12 +182,12 @@ public class MenuServlet extends HttpServlet {
                     "</div>"
                 );
 
-                out.println(
-                    "<a class='order-btn' " +
-                    "href='OrderPageServlet?food=" +
-                    id +
-                    "'>Order Now</a>"
-                );
+           out.println(
+    "<a class='order-btn' " +
+    "href='OrderPageServlet?food=" +
+    java.net.URLEncoder.encode(name, "UTF-8") +
+    "'>Order Now</a>"
+);
 
                 out.println("</div>");
             }
