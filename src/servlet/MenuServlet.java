@@ -35,14 +35,19 @@ public class MenuServlet extends HttpServlet {
 
         if (url == null || username == null || password == null) {
 
-            out.println("<h2>Database environment variables are missing.</h2>");
+            out.println(
+                "<h2>Database environment variables are missing.</h2>"
+            );
+
             return;
         }
 
         // Convert Render MySQL URL to JDBC URL
+
         if (url.startsWith("mysql://")) {
             url = "jdbc:" + url;
         }
+
 
         // =========================================
         // HTML START
@@ -51,11 +56,18 @@ public class MenuServlet extends HttpServlet {
         out.println("""
                 <!DOCTYPE html>
                 <html>
+
                 <head>
+
                     <meta charset="UTF-8">
+
+                    <meta name="viewport"
+                          content="width=device-width, initial-scale=1.0">
+
                     <title>FoodieHub Menu</title>
 
                     <style>
+
                         body {
                             font-family: Arial, sans-serif;
                             background-color: #f7f7f7;
@@ -63,25 +75,60 @@ public class MenuServlet extends HttpServlet {
                             padding: 30px;
                         }
 
+                        .top-bar {
+                            max-width: 1100px;
+                            margin: 0 auto 25px auto;
+
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: center;
+                        }
+
                         h1 {
                             text-align: center;
                             color: #ff6b00;
+                            margin-bottom: 30px;
+                        }
+
+                        .cart-btn {
+                            background-color: #ff6b00;
+                            color: white;
+
+                            padding: 11px 18px;
+
+                            border-radius: 8px;
+
+                            text-decoration: none;
+
+                            font-weight: bold;
+                        }
+
+                        .cart-btn:hover {
+                            background-color: #e65c00;
                         }
 
                         .menu {
                             display: grid;
+
                             grid-template-columns:
                                 repeat(auto-fit, minmax(220px, 1fr));
+
                             gap: 25px;
+
                             max-width: 1100px;
-                            margin: 30px auto;
+
+                            margin: 0 auto;
                         }
 
                         .food-card {
                             background: white;
+
                             padding: 20px;
+
                             border-radius: 15px;
-                            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+
+                            box-shadow:
+                                0 4px 12px rgba(0,0,0,0.1);
                         }
 
                         .food-card h2 {
@@ -95,38 +142,62 @@ public class MenuServlet extends HttpServlet {
 
                         .price {
                             font-size: 20px;
+
                             font-weight: bold;
+
                             color: #ff6b00;
+
                             margin: 12px 0;
                         }
 
                         .description {
                             color: #555;
+
                             min-height: 45px;
                         }
 
-                        .order-btn {
+                        .cart-add-btn {
                             display: inline-block;
+
                             background-color: #ff6b00;
+
                             color: white;
+
                             padding: 10px 18px;
+
                             border-radius: 8px;
+
                             text-decoration: none;
+
                             margin-top: 10px;
                         }
 
-                        .order-btn:hover {
+                        .cart-add-btn:hover {
                             background-color: #e65c00;
                         }
+
                     </style>
+
                 </head>
 
                 <body>
+
+                    <div class="top-bar">
+
+                        <div></div>
+
+                        <a class="cart-btn"
+                           href="cart.jsp">
+                            🛒 View Cart
+                        </a>
+
+                    </div>
 
                     <h1>FoodieHub Menu</h1>
 
                     <div class="menu">
                 """);
+
 
         // =========================================
         // GET FOOD FROM DATABASE
@@ -139,30 +210,57 @@ public class MenuServlet extends HttpServlet {
                 ORDER BY id
                 """;
 
+
         try (
-                Connection con = DriverManager.getConnection(
-                        url, username, password);
 
-                PreparedStatement ps = con.prepareStatement(sql);
+                Connection con =
+                        DriverManager.getConnection(
+                                url,
+                                username,
+                                password
+                        );
 
-                ResultSet rs = ps.executeQuery()
+                PreparedStatement ps =
+                        con.prepareStatement(sql);
+
+                ResultSet rs =
+                        ps.executeQuery()
+
         ) {
 
             while (rs.next()) {
 
-                int id = rs.getInt("id");
+                int id =
+                        rs.getInt("id");
 
-                String name = rs.getString("name");
+                String name =
+                        rs.getString("name");
 
-                String category = rs.getString("category");
+                String category =
+                        rs.getString("category");
 
-                BigDecimal price = rs.getBigDecimal("price");
+                BigDecimal price =
+                        rs.getBigDecimal("price");
 
-                String description = rs.getString("description");
+                String description =
+                        rs.getString("description");
 
-                out.println("<div class='food-card'>");
 
-                out.println("<h2>" + escapeHtml(name) + "</h2>");
+                // =========================================
+                // FOOD CARD
+                // =========================================
+
+                out.println(
+                    "<div class='food-card'>"
+                );
+
+
+                out.println(
+                    "<h2>" +
+                    escapeHtml(name) +
+                    "</h2>"
+                );
+
 
                 out.println(
                     "<div class='category'>" +
@@ -170,11 +268,13 @@ public class MenuServlet extends HttpServlet {
                     "</div>"
                 );
 
+
                 out.println(
                     "<div class='price'>₹" +
                     price +
                     "</div>"
                 );
+
 
                 out.println(
                     "<div class='description'>" +
@@ -182,19 +282,37 @@ public class MenuServlet extends HttpServlet {
                     "</div>"
                 );
 
-           out.println(
-    "<a class='order-btn' " +
-    "href='OrderPageServlet?food=" +
-    java.net.URLEncoder.encode(name, "UTF-8") +
-    "'>Order Now</a>"
-);
 
-                out.println("</div>");
+                // =========================================
+                // ADD TO CART
+                // =========================================
+
+                out.println(
+                    "<a class='cart-add-btn' " +
+
+                    "href='AddToCartServlet?foodId=" +
+
+                    id +
+
+                    "'>" +
+
+                    "🛒 Add to Cart" +
+
+                    "</a>"
+                );
+
+
+                out.println(
+                    "</div>"
+                );
             }
+
 
         } catch (Exception e) {
 
-            out.println("<h2>Unable to load menu.</h2>");
+            out.println(
+                "<h2>Unable to load menu.</h2>"
+            );
 
             out.println(
                 "<p>" +
@@ -202,6 +320,7 @@ public class MenuServlet extends HttpServlet {
                 "</p>"
             );
         }
+
 
         // =========================================
         // HTML END
@@ -211,9 +330,11 @@ public class MenuServlet extends HttpServlet {
                     </div>
 
                 </body>
+
                 </html>
                 """);
     }
+
 
     // =========================================
     // HTML ESCAPE
