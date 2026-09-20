@@ -580,7 +580,7 @@
             <div class="empty-cart">
 
                 <div class="empty-icon">
-                    🍽️
+                    
                 </div>
 
                 <h2>
@@ -723,7 +723,7 @@
                 <a href="MenuServlet"
                    class="continue-btn">
 
-                    🍽 Continue Shopping
+                     Continue Shopping
 
                 </a>
 
@@ -731,7 +731,7 @@
                 <a href="ClearCartServlet"
                    class="clear-btn">
 
-                    🧹 Clear Cart
+                     Clear Cart
 
                 </a>
 
@@ -739,7 +739,7 @@
                 <a href="OrderPageServlet"
                    class="checkout-btn">
 
-                    📦 Checkout
+                     Checkout
 
                 </a>
 
