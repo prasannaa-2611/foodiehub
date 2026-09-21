@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
-
+<%@ page import="java.util.List" %>
+<%@ page import="java.util.Map" %>
 <%
     // =========================================
     // CHECK LOGIN
@@ -427,32 +428,35 @@ if (selectedFood == null) {
                         Select Food
                     </label>
 
-                    <select id="foodName" name="foodName" required>
+          <select id="foodName" name="foodName" required>
 
     <option value="">-- Choose Food --</option>
 
-    <option value="Pizza"
-        <%= "Pizza".equals(selectedFood) ? "selected" : "" %>>
-        Pizza - Rs.200
-    </option>
+    <%
+        List<Map<String, Object>> foods =
+                (List<Map<String, Object>>) request.getAttribute("foods");
 
-    <option value="Burger"
-        <%= "Burger".equals(selectedFood) ? "selected" : "" %>>
-        Burger - Rs.120
-    </option>
+        if (foods != null) {
+            for (Map<String, Object> food : foods) {
 
-    <option value="Biryani"
-        <%= "Biryani".equals(selectedFood) ? "selected" : "" %>>
-        Biryani - Rs.180
-    </option>
+                String foodName =
+                        (String) food.get("name");
 
-    <option value="Pasta"
-        <%= "Pasta".equals(selectedFood) ? "selected" : "" %>>
-        Pasta - Rs.150
-    </option>
+                double price =
+                        ((Number) food.get("price")).doubleValue();
+    %>
 
-</select>
+        <option value="<%= foodName %>"
+            <%= foodName.equals(selectedFood) ? "selected" : "" %>>
+            <%= foodName %> - Rs.<%= String.format("%.0f", price) %>
+        </option>
 
+    <%
+            }
+        }
+    %>
+
+</select>          
                 </div>
 
 

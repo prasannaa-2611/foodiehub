@@ -534,7 +534,7 @@
         <a href="MenuServlet"
            class="back-link">
 
-            ← Back to Menu
+             Back to Menu
 
         </a>
 
@@ -552,7 +552,7 @@
         <div class="heading">
 
             <h1>
-                🛒 Your Cart
+                 Your Cart
             </h1>
 
             <p>
@@ -646,7 +646,7 @@
 
                     <div class="food-price">
 
-                        ₹<%= String.format(
+                        <%= String.format(
                             "%.2f",
                             price
                         ) %>
@@ -667,7 +667,7 @@
 
                 <div class="item-total">
 
-                    ₹<%= String.format(
+                    <%= String.format(
                         "%.2f",
                         itemTotal
                     ) %>
@@ -705,7 +705,7 @@
 
                 <div class="grand-total">
 
-                    ₹<%= String.format(
+                    <%= String.format(
                         "%.2f",
                         grandTotal
                     ) %>

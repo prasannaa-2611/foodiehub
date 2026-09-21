@@ -3,6 +3,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -27,7 +31,7 @@ public class OrderPageServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
 
         if (session == null ||
-            session.getAttribute("userId") == null) {
+                session.getAttribute("userId") == null) {
 
             response.sendRedirect("login.html");
             return;
@@ -35,38 +39,38 @@ public class OrderPageServlet extends HttpServlet {
 
         int userId =
                 (Integer) session.getAttribute("userId");
-                System.out.println("ORDER PAGE USER ID = " + userId);
 
-String selectedFood = request.getParameter("food");
+        System.out.println("ORDER PAGE USER ID = " + userId);
 
-if (selectedFood == null) {
-    selectedFood = "";
-}
+        // =========================================
+        // SELECTED FOOD
+        // =========================================
 
-request.setAttribute("selectedFood", selectedFood);
+        String selectedFood = request.getParameter("food");
+
+        if (selectedFood == null) {
+            selectedFood = "";
+        }
+
+        request.setAttribute("selectedFood", selectedFood);
+
         // =========================================
         // DATABASE VARIABLES
         // =========================================
 
-        String url =
-                System.getenv("DB_URL");
-
-        String username =
-                System.getenv("DB_USERNAME");
-
-        String password =
-                System.getenv("DB_PASSWORD");
+        String url = System.getenv("DB_URL");
+        String username = System.getenv("DB_USERNAME");
+        String password = System.getenv("DB_PASSWORD");
 
         if (url != null && url.startsWith("mysql://")) {
             url = "jdbc:" + url;
         }
 
-
         // =========================================
         // GET SAVED ADDRESS
         // =========================================
 
-        String sql =
+        String addressSql =
                 "SELECT full_name, phone, address_line, " +
                 "city, state, pincode " +
                 "FROM addresses " +
@@ -74,13 +78,19 @@ request.setAttribute("selectedFood", selectedFood);
                 "ORDER BY id DESC " +
                 "LIMIT 1";
 
+        // =========================================
+        // GET ALL FOODS
+        // =========================================
+
+        String foodSql =
+                "SELECT id, name, price " +
+                "FROM foods " +
+                "WHERE available = TRUE " +
+                "ORDER BY id";
 
         try {
 
-            Class.forName(
-                    "com.mysql.cj.jdbc.Driver"
-            );
-
+            Class.forName("com.mysql.cj.jdbc.Driver");
 
             try (
                 Connection con =
@@ -90,19 +100,21 @@ request.setAttribute("selectedFood", selectedFood);
                                 password
                         );
 
-                PreparedStatement ps =
-                        con.prepareStatement(sql)
+                PreparedStatement addressPs =
+                        con.prepareStatement(addressSql);
+
+                PreparedStatement foodPs =
+                        con.prepareStatement(foodSql)
             ) {
 
-                ps.setInt(1, userId);
+                // =========================================
+                // GET ADDRESS
+                // =========================================
 
+                addressPs.setInt(1, userId);
 
                 try (ResultSet rs =
-                        ps.executeQuery()) {
-
-                    // =================================
-                    // ADDRESS FOUND
-                    // =================================
+                        addressPs.executeQuery()) {
 
                     if (rs.next()) {
 
@@ -143,28 +155,64 @@ request.setAttribute("selectedFood", selectedFood);
 
                     } else {
 
-                        // No address saved yet
-
                         request.setAttribute(
                                 "addressExists",
                                 false
                         );
                     }
-
-
-                    // =================================
-                    // OPEN ORDER PAGE
-                    // =================================
-
-                    request.getRequestDispatcher(
-                            "order.jsp"
-                    ).forward(
-                            request,
-                            response
-                    );
                 }
-            }
 
+                // =========================================
+                // GET FOODS FROM DATABASE
+                // =========================================
+
+                List<Map<String, Object>> foods =
+                        new ArrayList<>();
+
+                try (ResultSet rs =
+                        foodPs.executeQuery()) {
+
+                    while (rs.next()) {
+
+                        Map<String, Object> food =
+                                new HashMap<>();
+
+                        food.put(
+                                "id",
+                                rs.getInt("id")
+                        );
+
+                        food.put(
+                                "name",
+                                rs.getString("name")
+                        );
+
+                        food.put(
+                                "price",
+                                rs.getDouble("price")
+                        );
+
+                        foods.add(food);
+                    }
+                }
+
+                // Send foods to order.jsp
+                request.setAttribute(
+                        "foods",
+                        foods
+                );
+
+                // =========================================
+                // OPEN ORDER PAGE
+                // =========================================
+
+                request.getRequestDispatcher(
+                        "order.jsp"
+                ).forward(
+                        request,
+                        response
+                );
+            }
 
         } catch (Exception e) {
 
