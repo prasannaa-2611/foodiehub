@@ -1,6 +1,7 @@
-<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page contentType="text/html;charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
+
 <%
     // =========================================
     // CHECK LOGIN
@@ -13,6 +14,7 @@
         return;
     }
 
+
     // =========================================
     // USER DETAILS
     // =========================================
@@ -23,6 +25,11 @@
     if (customerName == null) {
         customerName = "User";
     }
+
+
+    // =========================================
+    // ADDRESS DETAILS
+    // =========================================
 
     String fullName =
             (String) request.getAttribute("fullName");
@@ -45,18 +52,23 @@
     Boolean addressExists =
             (Boolean) request.getAttribute("addressExists");
 
-String selectedFood =
-        (String) request.getAttribute("selectedFood");
 
-if (selectedFood == null) {
-    selectedFood = "";
-}
     if (fullName == null) fullName = "";
     if (phone == null) phone = "";
     if (addressLine == null) addressLine = "";
     if (city == null) city = "";
     if (state == null) state = "";
     if (pincode == null) pincode = "";
+
+
+    // =========================================
+    // GET CART
+    // =========================================
+
+    List<Map<String, String>> cart =
+            (List<Map<String, String>>) request.getAttribute("cart");
+
+    double cartTotal = 0;
 
 
     // =========================================
@@ -125,7 +137,8 @@ if (selectedFood == null) {
     <meta name="viewport"
           content="width=device-width, initial-scale=1.0">
 
-    <title>FoodieHub - Order Food</title>
+    <title>FoodieHub - Checkout</title>
+
 
     <style>
 
@@ -135,12 +148,14 @@ if (selectedFood == null) {
             box-sizing: border-box;
         }
 
+
         body {
             font-family: Arial, sans-serif;
             background: #fff8f0;
             color: #222;
             min-height: 100vh;
         }
+
 
         /* NAVBAR */
 
@@ -154,14 +169,17 @@ if (selectedFood == null) {
             box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
 
+
         .logo {
             font-size: 26px;
             font-weight: bold;
         }
 
+
         .logo span {
             color: #ff6b00;
         }
+
 
         nav a {
             text-decoration: none;
@@ -170,9 +188,11 @@ if (selectedFood == null) {
             margin-left: 20px;
         }
 
+
         nav a:hover {
             color: #ff6b00;
         }
+
 
         /* PAGE */
 
@@ -182,6 +202,7 @@ if (selectedFood == null) {
             margin: 50px auto;
         }
 
+
         .card {
             background: white;
             padding: 40px;
@@ -189,21 +210,25 @@ if (selectedFood == null) {
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
+
         .title {
             text-align: center;
             margin-bottom: 10px;
             font-size: 32px;
         }
 
+
         .title span {
             color: #ff6b00;
         }
+
 
         .subtitle {
             text-align: center;
             color: #777;
             margin-bottom: 30px;
         }
+
 
         /* SECTION */
 
@@ -212,17 +237,20 @@ if (selectedFood == null) {
             font-size: 22px;
         }
 
+
         /* FORM */
 
         .form-group {
             margin-bottom: 22px;
         }
 
+
         label {
             display: block;
             font-weight: bold;
             margin-bottom: 8px;
         }
+
 
         input,
         select {
@@ -234,11 +262,92 @@ if (selectedFood == null) {
             background: white;
         }
 
+
         input:focus,
         select:focus {
             outline: none;
             border-color: #ff6b00;
         }
+
+
+        /* CART */
+
+        .cart-box {
+            background: #fff8f0;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+
+        .item-name {
+            font-weight: bold;
+            font-size: 17px;
+        }
+
+
+        .item-details {
+            color: #777;
+            margin-top: 5px;
+        }
+
+
+        .item-total {
+            font-weight: bold;
+            font-size: 17px;
+        }
+
+
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 18px;
+            padding-top: 15px;
+            border-top: 2px solid #ddd;
+            font-size: 20px;
+        }
+
+
+        .cart-total-price {
+            color: #ff6b00;
+            font-weight: bold;
+        }
+
+
+        .empty-cart {
+            background: #fff3e8;
+            padding: 20px;
+            border-radius: 14px;
+            text-align: center;
+            color: #666;
+        }
+
+
+        .add-food {
+            display: inline-block;
+            margin-top: 12px;
+            background: #ff6b00;
+            color: white;
+            text-decoration: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
 
         /* SAVED ADDRESS */
 
@@ -250,9 +359,11 @@ if (selectedFood == null) {
             margin-bottom: 20px;
         }
 
+
         .saved-address strong {
             color: #222;
         }
+
 
         .edit-link {
             display: inline-block;
@@ -262,9 +373,11 @@ if (selectedFood == null) {
             font-weight: bold;
         }
 
+
         .edit-link:hover {
             text-decoration: underline;
         }
+
 
         .no-address {
             background: #fff3e8;
@@ -273,6 +386,7 @@ if (selectedFood == null) {
             text-align: center;
             color: #666;
         }
+
 
         .add-address {
             display: inline-block;
@@ -284,6 +398,7 @@ if (selectedFood == null) {
             border-radius: 8px;
             font-weight: bold;
         }
+
 
         /* BUTTON */
 
@@ -300,14 +415,17 @@ if (selectedFood == null) {
             margin-top: 10px;
         }
 
+
         .submit-btn:hover {
             background: #e85d00;
         }
+
 
         .submit-btn:disabled {
             background: #aaa;
             cursor: not-allowed;
         }
+
 
         .back {
             display: block;
@@ -318,6 +436,7 @@ if (selectedFood == null) {
             font-weight: bold;
         }
 
+
         /* MOBILE */
 
         @media (max-width: 600px) {
@@ -326,21 +445,31 @@ if (selectedFood == null) {
                 padding: 0 20px;
             }
 
+
             nav a {
                 margin-left: 10px;
             }
+
 
             .page {
                 margin: 30px auto;
             }
 
+
             .card {
                 padding: 25px 20px;
             }
 
+
             .title {
                 font-size: 27px;
             }
+
+
+            .cart-item {
+                gap: 15px;
+            }
+
         }
 
     </style>
@@ -350,6 +479,7 @@ if (selectedFood == null) {
 
 <body>
 
+
     <!-- NAVIGATION -->
 
     <nav>
@@ -357,6 +487,7 @@ if (selectedFood == null) {
         <div class="logo">
             Foodie<span>Hub</span>
         </div>
+
 
         <div>
 
@@ -373,19 +504,23 @@ if (selectedFood == null) {
     </nav>
 
 
+
     <!-- ORDER PAGE -->
 
     <div class="page">
 
         <div class="card">
 
+
             <h1 class="title">
-                Place Your <span>Order</span>
+                Checkout <span>Order</span>
             </h1>
 
+
             <p class="subtitle">
-                Choose your favourite food and place your order 🍴
+                Review your cart and place your order 🍴
             </p>
+
 
 
             <!-- ORDER FORM -->
@@ -396,14 +531,16 @@ if (selectedFood == null) {
                 <!-- CUSTOMER -->
 
                 <h2 class="section-title">
-                     Customer Information
+                    Customer Information
                 </h2>
+
 
                 <div class="form-group">
 
                     <label for="customerName">
                         Your Name
                     </label>
+
 
                     <input
                         type="text"
@@ -415,67 +552,110 @@ if (selectedFood == null) {
                 </div>
 
 
-                <!-- FOOD -->
+
+                <!-- CART -->
 
                 <h2 class="section-title">
-                 Order Details
+                    🛒 Order Details
                 </h2>
 
 
-                <div class="form-group">
-
-                    <label for="foodName">
-                        Select Food
-                    </label>
-
-          <select id="foodName" name="foodName" required>
-
-    <option value="">-- Choose Food --</option>
-
-    <%
-        List<Map<String, Object>> foods =
-                (List<Map<String, Object>>) request.getAttribute("foods");
-
-        if (foods != null) {
-            for (Map<String, Object> food : foods) {
-
-                String foodName =
-                        (String) food.get("name");
-
-                double price =
-                        ((Number) food.get("price")).doubleValue();
-    %>
-
-        <option value="<%= foodName %>"
-            <%= foodName.equals(selectedFood) ? "selected" : "" %>>
-            <%= foodName %> - Rs.<%= String.format("%.0f", price) %>
-        </option>
-
-    <%
-            }
-        }
-    %>
-
-</select>          
-                </div>
+                <% if (cart == null || cart.isEmpty()) { %>
 
 
-                <div class="form-group">
+                    <div class="empty-cart">
 
-                    <label for="quantity">
-                        Quantity
-                    </label>
+                        <p>
+                            Your cart is empty.
+                        </p>
 
-                    <input
-                        type="number"
-                        id="quantity"
-                        name="quantity"
-                        min="1"
-                        max="20"
-                        value="1"
-                        required>
 
-                </div>
+                        <a href="MenuServlet" class="add-food">
+                            + Add Food
+                        </a>
+
+                    </div>
+
+
+                <% } else { %>
+
+
+                    <div class="cart-box">
+
+
+                        <% for (Map<String, String> item : cart) { %>
+
+
+                            <%
+                                String itemName = item.get("name");
+                                String itemPrice = item.get("price");
+                                String itemQuantity = item.get("quantity");
+
+                                double price =
+                                        Double.parseDouble(itemPrice);
+
+                                int quantity =
+                                        Integer.parseInt(itemQuantity);
+
+                                double itemTotal =
+                                        price * quantity;
+
+                                cartTotal += itemTotal;
+                            %>
+
+
+                            <div class="cart-item">
+
+
+                                <div>
+
+                                    <div class="item-name">
+                                        <%= itemName %>
+                                    </div>
+
+
+                                    <div class="item-details">
+                                        ₹<%= String.format("%.0f", price) %>
+                                        ×
+                                        <%= quantity %>
+                                    </div>
+
+                                </div>
+
+
+                                <div class="item-total">
+                                    ₹<%= String.format("%.0f", itemTotal) %>
+                                </div>
+
+
+                            </div>
+
+
+                        <% } %>
+
+
+
+                        <!-- TOTAL -->
+
+                        <div class="cart-total">
+
+                            <strong>
+                                Total
+                            </strong>
+
+
+                            <span class="cart-total-price">
+                                ₹<%= String.format("%.0f", cartTotal) %>
+                            </span>
+
+                        </div>
+
+
+                    </div>
+
+
+                <% } %>
+
 
 
                 <!-- DELIVERY ADDRESS -->
@@ -485,64 +665,88 @@ if (selectedFood == null) {
                 </h2>
 
 
+
                 <% if (Boolean.TRUE.equals(addressExists)) { %>
 
+
                     <div class="saved-address">
+
 
                         <strong>
                             <%= safeFullName %>
                         </strong>
 
+
                         <br>
+
 
                         <%= safePhone %>
 
+
                         <br>
+
 
                         <%= safeAddress %>
 
+
                         <br>
+
 
                         <%= safeCity %>,
                         <%= safeState %>
                         -
                         <%= safePincode %>
 
+
                         <br>
+
 
                         <a href="AddressServlet"
                            class="edit-link">
-                             Edit Address
+                            Edit Address
                         </a>
+
 
                     </div>
 
 
+
                     <!-- Hidden address values -->
 
-                    <input type="hidden"
-                           name="fullName"
-                           value="<%= safeFullName %>">
+                    <input
+                        type="hidden"
+                        name="fullName"
+                        value="<%= safeFullName %>">
 
-                    <input type="hidden"
-                           name="phone"
-                           value="<%= safePhone %>">
 
-                    <input type="hidden"
-                           name="addressLine"
-                           value="<%= safeAddress %>">
+                    <input
+                        type="hidden"
+                        name="phone"
+                        value="<%= safePhone %>">
 
-                    <input type="hidden"
-                           name="city"
-                           value="<%= safeCity %>">
 
-                    <input type="hidden"
-                           name="state"
-                           value="<%= safeState %>">
+                    <input
+                        type="hidden"
+                        name="addressLine"
+                        value="<%= safeAddress %>">
 
-                    <input type="hidden"
-                           name="pincode"
-                           value="<%= safePincode %>">
+
+                    <input
+                        type="hidden"
+                        name="city"
+                        value="<%= safeCity %>">
+
+
+                    <input
+                        type="hidden"
+                        name="state"
+                        value="<%= safeState %>">
+
+
+                    <input
+                        type="hidden"
+                        name="pincode"
+                        value="<%= safePincode %>">
 
 
                 <% } else { %>
@@ -553,6 +757,7 @@ if (selectedFood == null) {
                         <p>
                             You don't have a delivery address saved.
                         </p>
+
 
                         <a href="AddressServlet"
                            class="add-address">
@@ -565,20 +770,25 @@ if (selectedFood == null) {
                 <% } %>
 
 
+
                 <!-- SUBMIT -->
 
                 <button
                     type="submit"
                     class="submit-btn"
-                    <% if (!Boolean.TRUE.equals(addressExists)) { %>
+                    <% if (!Boolean.TRUE.equals(addressExists)
+                           || cart == null
+                           || cart.isEmpty()) { %>
                         disabled
                     <% } %>>
 
-                     Place Order
+                    Place Order
 
                 </button>
 
+
             </form>
+
 
 
             <a href="index.html"
@@ -586,9 +796,11 @@ if (selectedFood == null) {
                 Back to Home
             </a>
 
+
         </div>
 
     </div>
+
 
 
     <footer>
@@ -596,6 +808,7 @@ if (selectedFood == null) {
         © 2026 FoodieHub • Delicious food, happy moments ❤️
 
     </footer>
+
 
 </body>
 

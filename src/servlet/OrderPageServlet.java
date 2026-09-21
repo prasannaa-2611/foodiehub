@@ -3,10 +3,9 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -19,32 +18,39 @@ import jakarta.servlet.http.HttpSession;
 public class OrderPageServlet extends HttpServlet {
 
     @Override
-    protected void doGet(
-            HttpServletRequest request,
-            HttpServletResponse response)
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // =========================================
-        // CHECK LOGIN
-        // =========================================
-
+        // Check login
         HttpSession session = request.getSession(false);
 
-        if (session == null ||
-                session.getAttribute("userId") == null) {
-
+        if (session == null || session.getAttribute("userId") == null) {
             response.sendRedirect("login.html");
             return;
         }
 
-        int userId =
-                (Integer) session.getAttribute("userId");
+        int userId = (Integer) session.getAttribute("userId");
 
         System.out.println("ORDER PAGE USER ID = " + userId);
 
-        // =========================================
-        // SELECTED FOOD
-        // =========================================
+        // ==========================================
+        // GET CART FROM SESSION
+        // ==========================================
+
+        @SuppressWarnings("unchecked")
+        List<Map<String, String>> cart =
+                (List<Map<String, String>>) session.getAttribute("cart");
+
+        if (cart == null) {
+            cart = new ArrayList<>();
+        }
+
+        // Send cart to order.jsp
+        request.setAttribute("cart", cart);
+
+        // ==========================================
+        // OLD SELECTED FOOD SUPPORT
+        // ==========================================
 
         String selectedFood = request.getParameter("food");
 
@@ -54,9 +60,9 @@ public class OrderPageServlet extends HttpServlet {
 
         request.setAttribute("selectedFood", selectedFood);
 
-        // =========================================
-        // DATABASE VARIABLES
-        // =========================================
+        // ==========================================
+        // DATABASE CONNECTION DETAILS
+        // ==========================================
 
         String url = System.getenv("DB_URL");
         String username = System.getenv("DB_USERNAME");
@@ -66,11 +72,11 @@ public class OrderPageServlet extends HttpServlet {
             url = "jdbc:" + url;
         }
 
-        // =========================================
-        // GET SAVED ADDRESS
-        // =========================================
+        // ==========================================
+        // GET LAST SAVED ADDRESS
+        // ==========================================
 
-        String addressSql =
+        String sql =
                 "SELECT full_name, phone, address_line, " +
                 "city, state, pincode " +
                 "FROM addresses " +
@@ -78,43 +84,18 @@ public class OrderPageServlet extends HttpServlet {
                 "ORDER BY id DESC " +
                 "LIMIT 1";
 
-        // =========================================
-        // GET ALL FOODS
-        // =========================================
-
-        String foodSql =
-                "SELECT id, name, price " +
-                "FROM foods " +
-                "WHERE available = TRUE " +
-                "ORDER BY id";
-
         try {
 
             Class.forName("com.mysql.cj.jdbc.Driver");
 
-            try (
-                Connection con =
-                        DriverManager.getConnection(
-                                url,
-                                username,
-                                password
-                        );
+            try (Connection con = DriverManager.getConnection(
+                        url, username, password);
 
-                PreparedStatement addressPs =
-                        con.prepareStatement(addressSql);
+                 PreparedStatement ps = con.prepareStatement(sql)) {
 
-                PreparedStatement foodPs =
-                        con.prepareStatement(foodSql)
-            ) {
+                ps.setInt(1, userId);
 
-                // =========================================
-                // GET ADDRESS
-                // =========================================
-
-                addressPs.setInt(1, userId);
-
-                try (ResultSet rs =
-                        addressPs.executeQuery()) {
+                try (ResultSet rs = ps.executeQuery()) {
 
                     if (rs.next()) {
 
@@ -160,58 +141,14 @@ public class OrderPageServlet extends HttpServlet {
                                 false
                         );
                     }
+
+                    // ==========================================
+                    // OPEN ORDER PAGE
+                    // ==========================================
+
+                    request.getRequestDispatcher("order.jsp")
+                            .forward(request, response);
                 }
-
-                // =========================================
-                // GET FOODS FROM DATABASE
-                // =========================================
-
-                List<Map<String, Object>> foods =
-                        new ArrayList<>();
-
-                try (ResultSet rs =
-                        foodPs.executeQuery()) {
-
-                    while (rs.next()) {
-
-                        Map<String, Object> food =
-                                new HashMap<>();
-
-                        food.put(
-                                "id",
-                                rs.getInt("id")
-                        );
-
-                        food.put(
-                                "name",
-                                rs.getString("name")
-                        );
-
-                        food.put(
-                                "price",
-                                rs.getDouble("price")
-                        );
-
-                        foods.add(food);
-                    }
-                }
-
-                // Send foods to order.jsp
-                request.setAttribute(
-                        "foods",
-                        foods
-                );
-
-                // =========================================
-                // OPEN ORDER PAGE
-                // =========================================
-
-                request.getRequestDispatcher(
-                        "order.jsp"
-                ).forward(
-                        request,
-                        response
-                );
             }
 
         } catch (Exception e) {
